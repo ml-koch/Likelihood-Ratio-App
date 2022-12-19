@@ -73,7 +73,7 @@ rowCallback <- c(
   "        .css({'color': 'rgb(151,151,151)', 'font-style': 'italic'});",
   "    }",
   "  }",
-  "}"  
+  "}"
 )
 ### Reactive plotly resizing workaround ----------------------
 
@@ -120,7 +120,7 @@ ui <- fluidPage(
                                         step = 0.1),
                            
                            selectInput("result_1", label = h4("Test result"),
-                                       choices = list("Positive" = "pos", 
+                                       choices = list("Positive" = "pos",
                                                       "Negative" = "neg"),
                                        selected = "Positive"),
                            
@@ -132,11 +132,11 @@ ui <- fluidPage(
                            
                            
                            selectInput("method", label = h4("Method"),
-                                       choices = list("Fast" = "fast", 
+                                       choices = list("Fast" = "fast",
                                                       "Detail" = "detail"),
                                        selected = "Fast"),
                            
-                           actionButton("add", "Add test", 
+                           actionButton("add", "Add test",
                                         icon = icon("plus-circle")),
                            
                            br(),
@@ -162,9 +162,9 @@ ui <- fluidPage(
           p("The final posttest probability of disease is",
             textOutput("post_prob")),
           
-          textOutput("track"),),
+          textOutput("track"), ),
         
-        tabPanel(title = "Table", 
+        tabPanel(title = "Table",
           dataTableOutput("test"),
           br(),
           radioButtons(inputId = "filetype",
@@ -200,14 +200,14 @@ server <- function(input, output, session) {
   # Increase test and button counter
   observeEvent(input$add, {
     
-    rv$counter <- rv$counter + 1L 
+    rv$counter <- rv$counter + 1L
     btn$counter <- btn$counter + 1L
     
   }, priority = 10,
   label = "Count Increaser")
     
   observeEvent(input$add, {
-    updateTabsetPanel(session, "tabs", 
+    updateTabsetPanel(session, "tabs",
                       shinyInput("Test", rv$counter))
   })
   
@@ -223,14 +223,14 @@ server <- function(input, output, session) {
                        helpText("You can enter your relevant 
                                 test characteristics"),
                                 
-                       numericInput(shinyInput("sens", rv$counter), 
+                       numericInput(shinyInput("sens", rv$counter),
                                     label = h4("Sensitvitiy"),
                                     value = 0.5,
                                     min = 0,
                                     max = 1,
                                     step = 0.1),
                                 
-                       numericInput(shinyInput("spec", rv$counter), 
+                       numericInput(shinyInput("spec", rv$counter),
                                     label = h4("Specificity"),
                                     value = 0.5,
                                     min = 0,
@@ -244,10 +244,10 @@ server <- function(input, output, session) {
                                    selected = "Positive"),
                        
                        # Remove button only shows on tab with
-                       # highest index 
+                       # highest index
                        conditionalPanel(
                          condition = "output.max_tab",
-                         actionButton(shinyInput("remove_btn", btn$counter), 
+                         actionButton(shinyInput("remove_btn", btn$counter),
                                       "Remove",
                                       icon = icon("minus-circle")))
                        
@@ -273,7 +273,7 @@ server <- function(input, output, session) {
     # don't accidentally remove Test1 tab:
     if (!identical(input$tabs, "Test1")) {
       input$tabs
-    } 
+    }
     else {
       NULL
     }
@@ -322,21 +322,21 @@ server <- function(input, output, session) {
   
   sens_list <- eventReactive(input$calc, {
     
-    sensis <- sapply(1:rv$counter, function(x) 
+    sensis <- sapply(1:rv$counter, function(x)
       input[[paste0("sens_", x)]])
     
   })
   
-  spec_list <- eventReactive(input$calc,{
+  spec_list <- eventReactive(input$calc, {
     
-    specis <- sapply(1:rv$counter, function(x) 
+    specis <- sapply(1:rv$counter, function(x)
       input[[paste0("spec_", x)]])
     
   })
   
   res_list <- eventReactive(input$calc, {
     
-    resis <- sapply(1:rv$counter, function(x) 
+    resis <- sapply(1:rv$counter, function(x)
       input[[paste0("result_", x)]])
     
   })
@@ -350,7 +350,7 @@ server <- function(input, output, session) {
   # Create dataframe for use in outputs
   test_data <- eventReactive(input$calc, {
     
-    multiple_post_prob(sens_list(),spec_list(), br_reactive(),
+    multiple_post_prob(sens_list(), spec_list(), br_reactive(),
                        res_list(), method = input$method)
     
   })
@@ -371,12 +371,12 @@ server <- function(input, output, session) {
     filename = function() {
       paste0("posttest_probability.", input$filetype)
     },
-    content = function(file) { 
-      if(input$filetype == "csv") { 
-        write_csv(test_data(), file) 
+    content = function(file) {
+      if(input$filetype == "csv") {
+        write_csv(test_data(), file)
       }
-      if(input$filetype == "tsv") { 
-        write_tsv(test_data(), file) 
+      if(input$filetype == "tsv") {
+        write_tsv(test_data(), file)
       }
       
     }
@@ -386,15 +386,15 @@ server <- function(input, output, session) {
   
   plot1 <- eventReactive(input$calc, {
     
-    plot1 <- ggplot(test_data(), aes(x = 1-Specificity, 
-                                     y = Sensitivity, 
-                                     color = Result, 
-                                     label = LR)) + 
-      geom_point() + 
+    plot1 <- ggplot(test_data(), aes(x = 1 - Specificity,
+                                     y = Sensitivity,
+                                     color = Result,
+                                     label = LR)) +
+      geom_point() +
       xlim(0, 1) +
       ylim(0, 1) +
       labs(title = "ROC plot", color = "Test result\n") +
-      scale_color_manual(labels = c("Positive", "Negative"), 
+      scale_color_manual(labels = c("Positive", "Negative"),
                          values = c("blue", "red")) +
       geom_abline(slope = 1, intercept = 0, colour = "gray75")
     
