@@ -1,5 +1,5 @@
 # Working directory -------------------------------------------
-setwd("C:/Users/maxim/Documents/R/Postttest Probability Shiny App")
+setwd("C:/Users/Maximilian/Documents/Repositories/Postttest-Probability-Shiny-App")
 
 # Packages ----------------------------------------------------
 library(shiny)
@@ -10,11 +10,11 @@ library(shinydashboard)
 library(reactlog)
 library(DT)
 library(plotly)
-library(thematic)
+#library(thematic)
 
 # Global options ----------------------------------------------
 options(shiny.reactlog = TRUE)
-thematic_shiny()
+#thematic_shiny()
 
 # function source ---------------------------------------------
 source("multiple_post_probs.R")
@@ -145,7 +145,7 @@ ui <- fluidPage(
                            actionButton("calc", "Calculate posttest probability",
                                         icon = icon("calculator")),
                            
-                           themeSelector2(),
+                           #themeSelector2(),
                            
                            )
                   
@@ -176,7 +176,6 @@ ui <- fluidPage(
           ),
         
         tabPanel(title = "Plot",
-                 
                  plotlyOutput(outputId = "roc_plot",
                               width = "auto")
           
@@ -372,10 +371,10 @@ server <- function(input, output, session) {
       paste0("posttest_probability.", input$filetype)
     },
     content = function(file) {
-      if(input$filetype == "csv") {
+      if (input$filetype == "csv") {
         write_csv(test_data(), file)
       }
-      if(input$filetype == "tsv") {
+      if (input$filetype == "tsv") {
         write_tsv(test_data(), file)
       }
       
@@ -409,8 +408,7 @@ server <- function(input, output, session) {
                width = (0.8 * as.numeric(input$dimension[1])),
                height = as.numeric(input$dimension[2]))
       
-      
-      
+           
     })
     
   })
