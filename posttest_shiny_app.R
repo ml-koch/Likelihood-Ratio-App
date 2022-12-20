@@ -10,11 +10,12 @@ library(shinydashboard)
 library(reactlog)
 library(DT)
 library(plotly)
-library(thematic)
+#library(thematic)
+library(riskyr)
 
 # Global options ----------------------------------------------
 options(shiny.reactlog = TRUE)
-thematic_shiny()
+#thematic_shiny()
 
 # function source ---------------------------------------------
 source("multiple_post_probs.R")
@@ -79,6 +80,7 @@ rowCallback <- c(
 
 # Ui ---------------------------------------------------------
 ui <- fluidPage(
+  withMathJax(),
   tags$head(tags$script('
                         var dimension = [0, 0];
                         $(document).on("shiny:connected", function(e) {
@@ -186,7 +188,8 @@ ui <- fluidPage(
               title = "Plot",
               plotlyOutput(
                 outputId = "roc_plot",
-                width = "auto"
+                width = "auto",
+                height = "auto"
               )
             )
           )
@@ -198,61 +201,42 @@ ui <- fluidPage(
       sidebarLayout(
         sidebarPanel(
           tabsetPanel(
-            id = "tabs2x2",
-            # Static Test 1 tab
+            id = "tabs_2x2",
+            # Static 2x2 tab
             tabPanel(
-              title = "Test 1",
-              value = "Test1",
+              title = "2 x 2",
+              value = "2x2_sidebar",
 
               # Content of Test 1 tab :
               helpText("You can enter your relevant 
                                         test characteristics"),
-              numericInput("sens_1",
-                label = h4("Sensitvitiy"),
-                value = 0.5,
-                min = 0,
-                max = 1,
-                step = 0.1
+              numericInput("tp",
+                label = h4("True positives"),
+                value = 10,
+                min = 1,
+                step = 1
               ),
-              numericInput("spec_1",
-                label = h4("Specificity"),
-                value = 0.5,
-                min = 0,
-                max = 1,
-                step = 0.1
+              numericInput("fp",
+                label = h4("False positives"),
+                value = 10,
+                min = 1,
+                step = 1
               ),
-              selectInput("result_1",
-                label = h4("Test result"),
-                choices = list(
-                  "Positive" = "pos",
-                  "Negative" = "neg"
-                ),
-                selected = "Positive"
+              numericInput("tn",
+                label = h4("True negatives"),
+                value = 10,
+                min = 1,
+                step = 1
               ),
-              numericInput("br",
-                label = h4("Base rate"),
-                value = 0.5,
-                min = 0,
-                max = 1,
-                step = 0.1
+              numericInput("fn",
+                label = h4("False negatives"),
+                value = 10,
+                min = 1,
+                step = 1
               ),
-              selectInput("method",
-                label = h4("Method"),
-                choices = list(
-                  "Fast" = "fast",
-                  "Detail" = "detail"
-                ),
-                selected = "Fast"
-              ),
-              actionButton("add", "Add test",
-                icon = icon("plus-circle")
-              ),
-              br(),
-              br(),
-              actionButton("calc", "Calculate posttest probability",
+              actionButton("go_2x2", "Go",
                 icon = icon("calculator")
-              ),
-              themeSelector2(),
+              )
             )
           )
         ),
@@ -260,48 +244,38 @@ ui <- fluidPage(
         # Main Panel for Output
         mainPanel(
           tabsetPanel(
-            id = "output_tabs",
+            id = "2x2_output_tabs",
             tabPanel(
-              title = "Text",
-              p(
-                "The final posttest probability of disease is",
-                textOutput("post_prob")
-              ),
-              textOutput("track"),
+              title = "2x2 Table",
+              tableOutput("table_2x2_out"),
+              br(),
+              uiOutput("sens_2x2_out"), 
+              br(),
+              br(),
+              uiOutput("spec_2x2_out"),
+              br(),
+              br(),
+              uiOutput("br_2x2_out")
             ),
             tabPanel(
-              title = "Table",
-              dataTableOutput("test"),
-              br(),
-              radioButtons(
-                inputId = "filetype",
-                label = "Select filetype:",
-                choices = c("csv", "tsv"),
-                selected = "csv"
-              ),
-              br(),
-              downloadButton("download_data", "Download data")
-            ),
-            tabPanel(
-              title = "Plot",
-              plotlyOutput(
-                outputId = "roc_plot",
-                width = "auto"
-              )
+              title = "Tree Plot",
+              #tableOutput("tree_df_out"),
+              plotOutput("tree_plot_out")
             )
           )
         )
       )
-    
-    
-    )
-
+    ),
+    tabPanel("customize plot colors"),
+    tabPanel("customize naming sheme"),
+    tabPanel("About")
   )
 )
 
 # Server -----------------------------------------------------
 server <- function(input, output, session) {
-  ## Tab creation -------------------------------------------
+## PPC contents --------------------------------------------
+  ### Tab creation -------------------------------------------
   # Define counter for Tests
   rv <- reactiveValues(counter = 1L)
 
@@ -314,7 +288,7 @@ server <- function(input, output, session) {
     priority = 10,
     label = "Count Increaser"
   )
-
+  # jump to new tab
   observeEvent(input$add, {
     updateTabsetPanel(
       session, "tabs",
@@ -322,9 +296,7 @@ server <- function(input, output, session) {
     )
   })
 
-  # jump to new tab
-
-  # Create new Test tab
+    # Create new Test tab
   observeEvent(input$add, {
     appendTab(
       inputId = "tabs",
@@ -371,7 +343,7 @@ server <- function(input, output, session) {
     )
   })
 
-  ## Tab deletion ---------------------------------------------
+  ### Tab deletion ---------------------------------------------
   # reactive condition for display of remove button
   output$max_tab <- reactive({
     req(rv$counter > 1L)
@@ -420,16 +392,14 @@ server <- function(input, output, session) {
     })
   })
 
-
-  ## Debugging ------------------------------------------------
+  ### Debugging ------------------------------------------------
 
   # observer for debugging REMOVE BEFORE FINAL
   output$track <- renderText({
     paste("index", rv$counter, "Button", btn$counter)
   })
 
-
-  ## Post Probability calculation -------------------------------
+  ### Post Probability calculation -------------------------------
 
   # Create reactive vectors of test parameters that only trigger
   # on calc button press
@@ -464,7 +434,7 @@ server <- function(input, output, session) {
     )
   })
 
-  # Outputs --------------------------------------------------
+  ### Outputs --------------------------------------------------
 
   # Create datatable for output
   output$test <- renderDataTable(
@@ -524,12 +494,84 @@ server <- function(input, output, session) {
     })
   })
 
-
   observeEvent(input$calc, {
     print(res_list())
   })
-}
 
+## 2x2 -------------------------------------------------------
+  # Calculate sensitivity
+  sens_2x2 <- reactive({
+    input$tp / (input$tp + input$fn)
+  })
+  # Calculate specificity
+  spec_2x2 <- reactive({
+    input$tn / (input$tn + input$fp)
+  })
+  # Calculate baserate
+  br_2x2 <- reactive({
+    (input$tp + input$fn) / (input$tp + input$fn + input$tn + input$fp)
+  })
+  # Calculate total
+  total <- reactive({
+    input$tp + input$fn + input$tn + input$fp
+  })
+  # Create table 
+  table_2x2 <- reactive({
+    
+    all_pos <- c(input$tp, input$fn, input$tp + input$fn)
+    all_neg <- c(input$fp, input$tn, input$fp + input$tn)
+    row_names <- c("Positive Test", "Negative Test", "Total")
+
+    df <- data.frame(cbind(row_names, all_pos, all_neg)) %>%
+          mutate(horizontal = as.integer(all_pos) + as.integer(all_neg)) %>%
+          "colnames<-"(c("", "True Criterion", "False Criterion", "Total"))
+  })
+  # Tree plot
+    tree_plot <- reactive({
+
+    plot_prism(prev = br_2x2(),
+               sens = sens_2x2(),
+               spec = spec_2x2(),
+               N = total(),
+               p_scale = TRUE,
+               p_lwd = 5
+    )
+
+  })
+
+
+  ### Debugging --------------------------------------------------
+  output$sens_2x2_out <- renderUI({
+
+    withMathJax(paste0("The sensitivity of the test is: ",
+                       "\\(\\frac{TP}{TP + FN} = ",
+                       round(sens_2x2(), 4), "\\)"))
+  })
+  output$spec_2x2_out <- renderUI({
+        withMathJax(paste0("The specificity of the test is: ",
+                       "\\(\\frac{TN}{TN + FP} = ",
+                       round(spec_2x2(), 4), "\\)"))
+  })
+  output$br_2x2_out <- renderUI({
+        withMathJax(paste0("The base rate of the true criterion is: ",
+                       "\\(\\frac{TP + FN}{TP + FN + TN + FP} = ",
+                       round(br_2x2(), 4), "\\)"))
+  })
+  output$table_2x2_out <- renderTable({
+
+    table_2x2()
+  })
+
+  output$tree_df_out <- renderTable({
+
+    tree_df()
+  })
+  output$tree_plot_out <- renderPlot({
+
+    tree_plot()
+  })
+
+}
 # run App ----------------------------------------------------
 
 shinyApp(ui = ui, server = server)

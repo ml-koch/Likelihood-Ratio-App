@@ -12,3 +12,12 @@ To Do:
 - add xslx download format
 - interactive plot design?
 - plot 2x2 table?
+- add hover explanation labels
+- add mosaic plot with riskyr or ggplot
+- add plot mit den balken da die so dick sind und so
+- add other risky r plots
+- add colorsheme for plots?
+- add color customization
+- add slider vs numeric input selection
+- add population example slider for main part
+- rename posttest probability to ppv or npv?
