@@ -95,6 +95,7 @@ ui <- fluidPage(
                         });
                         ')),
   navbarPage("Navbar",
+  ## PPC tab ----------------------------------------------------
     tabPanel("PPC",                  
       titlePanel("Posttest Probability Calculator"),
       sidebarLayout(
@@ -196,6 +197,7 @@ ui <- fluidPage(
         )
       )
     ),
+    ## 2x2 tab -------------------------------------------------------
     tabPanel("2x2",
       titlePanel("2x2 Table Display"),
       sidebarLayout(
