@@ -110,19 +110,26 @@ ui <- fluidPage(
               helpText("You can enter your relevant 
                                         test characteristics"),
               numericInput("sens_1",
-                label = h4("Sensitvitiy"),
-                value = 0.5,
-                min = 0,
-                max = 1,
-                step = 0.1
-              ),
-              numericInput("spec_1",
-                label = h4("Specificity"),
-                value = 0.5,
-                min = 0,
-                max = 1,
-                step = 0.1
-              ),
+                        label = h4("Sensitvitiy"),
+                        value = 0.5,
+                        min = 0,
+                        max = 1,
+                        step = 0.1
+                      ),
+               numericInput("spec_1",
+                          label = h4("Specificity"),
+                          value = 0.5,
+                          min = 0,
+                          max = 1,
+                          step = 0.1
+                        ),
+              numericInput("br",
+                          label = h4("Base rate"),
+                          value = 0.5,
+                          min = 0,
+                          max = 1,
+                          step = 0.1
+                        ),
               selectInput("result_1",
                 label = h4("Test result"),
                 choices = list(
@@ -130,13 +137,6 @@ ui <- fluidPage(
                   "Negative" = "neg"
                 ),
                 selected = "Positive"
-              ),
-              numericInput("br",
-                label = h4("Base rate"),
-                value = 0.5,
-                min = 0,
-                max = 1,
-                step = 0.1
               ),
               selectInput("method",
                 label = h4("Method"),
@@ -200,45 +200,38 @@ ui <- fluidPage(
       titlePanel("2x2 Table Display"),
       sidebarLayout(
         sidebarPanel(
-          tabsetPanel(
-            id = "tabs_2x2",
-            # Static 2x2 tab
-            tabPanel(
               title = "2 x 2",
               value = "2x2_sidebar",
-
-              # Content of Test 1 tab :
+              # Content
               helpText("You can enter your relevant 
                                         test characteristics"),
-              numericInput("tp",
-                label = h4("True positives"),
-                value = 10,
-                min = 1,
-                step = 1
-              ),
-              numericInput("fp",
-                label = h4("False positives"),
-                value = 10,
-                min = 1,
-                step = 1
-              ),
-              numericInput("tn",
-                label = h4("True negatives"),
-                value = 10,
-                min = 1,
-                step = 1
-              ),
-              numericInput("fn",
-                label = h4("False negatives"),
-                value = 10,
-                min = 1,
-                step = 1
-              ),
+              h4("True positives"),
+              radioButtons("type_inp_tp", label = NULL,
+                           choices = c("Numeric", "Sliders"),
+                           selected = "Numeric",
+                           inline = TRUE),
+              uiOutput("tp_UI"),
+              h4("False positives"),
+              radioButtons("type_inp_fp", label = NULL,
+                           choices = c("Numeric", "Sliders"),
+                           selected = "Numeric",
+                           inline = TRUE),
+              uiOutput("fp_UI"),
+              h4("True negatives"),
+              radioButtons("type_inp_tn", label = NULL,
+                           choices = c("Numeric", "Sliders"),
+                           selected = "Numeric",
+                           inline = TRUE),
+              uiOutput("tn_UI"),
+              h4("False negatives"),
+              radioButtons("type_inp_fn", label = NULL,
+                           choices = c("Numeric", "Sliders"),
+                           selected = "Numeric",
+                           inline = TRUE),
+              uiOutput("fn_UI"),
               actionButton("go_2x2", "Go",
                 icon = icon("calculator")
               )
-            )
-          )
         ),
 
         # Main Panel for Output
@@ -258,9 +251,18 @@ ui <- fluidPage(
               uiOutput("br_2x2_out")
             ),
             tabPanel(
+              title = "Colorized Table",
+              plotOutput("col_table_out"),
+              p("Created using the", 
+                a("riskyr", href = "https://cran.r-project.org/web/packages/riskyr/index.html"),  "package")
+            ),
+            tabPanel(
               title = "Tree Plot",
-              #tableOutput("tree_df_out"),
               plotOutput("tree_plot_out")
+            ),
+            tabPanel(
+              title = "Area Plot",
+              plotOutput("area_plot_out")
             )
           )
         )
@@ -275,6 +277,7 @@ ui <- fluidPage(
 # Server -----------------------------------------------------
 server <- function(input, output, session) {
 ## PPC contents --------------------------------------------
+  
   ### Tab creation -------------------------------------------
   # Define counter for Tests
   rv <- reactiveValues(counter = 1L)
@@ -499,6 +502,105 @@ server <- function(input, output, session) {
   })
 
 ## 2x2 -------------------------------------------------------
+ ### Render Input UI -----------------------------------------
+  # render UI based on radio Buttons 
+  output$tp_UI <- renderUI({ 
+
+    # keep value when switching
+    value <- isolate(input$tp)
+
+    if (input$type_inp_tp == "Numeric") {
+        numericInput("tp",
+                      label = NULL,
+                      value = value,
+                      min = 1,
+                      max = 25000,
+                      step = 1
+                    )
+      }
+    else if (input$type_inp_tp == "Sliders") {
+        sliderInput("tp",
+                    label = NULL,
+                    value = value,
+                    min = 1,
+                    max = 25000,
+                    step = 1
+                  )
+      }
+  })
+  output$fp_UI <- renderUI({
+    
+    # keep value when switching
+    value <- isolate(input$fp)
+
+    if (input$type_inp_fp == "Numeric") {
+        numericInput("fp",
+            label = NULL,
+            value = value,
+            min = 1,
+            max = 25000,
+            step = 1
+          )
+    }
+    else if (input$type_inp_fp == "Sliders") {
+        sliderInput("fp",
+                    label = NULL,
+                    value = value,
+                    min = 1,
+                    max = 25000,
+                    step = 1
+                    )
+      }
+  })
+  output$tn_UI <- renderUI({
+
+    # keep value when switching
+    value <- isolate(input$tn)
+
+    if (input$type_inp_tn == "Numeric") {
+        numericInput("tn",
+            label = NULL,
+            value = value,
+            min = 1,
+            max = 25000,
+            step = 1
+          )
+    }
+    else if (input$type_inp_tn == "Sliders") {
+        sliderInput("tn",
+                    label = NULL,
+                    value = value,
+                    min = 1,
+                    max = 25000,
+                    step = 1
+                    )
+      }
+  })
+  output$fn_UI <- renderUI({
+    
+    # keep value when switching
+    value <- isolate(input$fn)
+
+    if (input$type_inp_fn == "Numeric") {
+        numericInput("fn",
+            label = NULL,
+            value = value,
+            min = 1,
+            max = 25000,
+            step = 1
+          )
+    }
+    else if (input$type_inp_fn == "Sliders") {
+        sliderInput("fn",
+                    label = NULL,
+                    value = value,
+                    min = 1,
+                    max = 25000,
+                    step = 1
+                    )
+    }
+  })
+  ### Calculations -------------------------------------
   # Calculate sensitivity
   sens_2x2 <- reactive({
     input$tp / (input$tp + input$fn)
@@ -526,18 +628,6 @@ server <- function(input, output, session) {
           mutate(horizontal = as.integer(all_pos) + as.integer(all_neg)) %>%
           "colnames<-"(c("", "True Criterion", "False Criterion", "Total"))
   })
-  # Tree plot
-    tree_plot <- reactive({
-
-    plot_prism(prev = br_2x2(),
-               sens = sens_2x2(),
-               spec = spec_2x2(),
-               N = total(),
-               p_scale = TRUE,
-               p_lwd = 5
-    )
-
-  })
 
 
   ### Debugging --------------------------------------------------
@@ -562,13 +652,35 @@ server <- function(input, output, session) {
     table_2x2()
   })
 
-  output$tree_df_out <- renderTable({
-
-    tree_df()
-  })
+  # Plot outputs
   output$tree_plot_out <- renderPlot({
 
-    tree_plot()
+    plot_prism(prev = br_2x2(),
+               sens = sens_2x2(),
+               spec = spec_2x2(),
+               N = total(),
+               p_scale = TRUE,
+               p_lwd = 2,
+               main = NULL
+    )
+  })
+  output$area_plot_out <- renderPlot({
+
+    plot_area(prev = br_2x2(),
+               sens = sens_2x2(),
+               spec = spec_2x2(),
+               N = total(),
+               main = NULL
+    )
+  })
+  output$col_table_out <- renderPlot({
+
+    plot_tab(prev = br_2x2(),
+               sens = sens_2x2(),
+               spec = spec_2x2(),
+               N = total(),
+               main = NULL
+    )
   })
 
 }
