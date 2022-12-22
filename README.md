@@ -6,20 +6,26 @@ Fast mode gives only the final resulting probability while detail mode saves pro
 Includes a text output, datatable output and an ROC plot. 
 
 Includes:
+- Posttest probability calculator for n tests using likelihood ratios
+- downloadable datatable for all values used in calculation
+- interactive ggplotly ROC plot displaying tests  
 - 2x2 mode with Sensitivitiy calculator
 - 2x2 table with various plots
 
 To Do:
 - General 
     - tests with multiple possible outcomes
-    - implement fast and detail correctly in the text output
     - add xslx download format
-    - interactive ROC plot design? (dimensions, colors, labels, ...)
+    - add true ROC line to plot with different prevalences
     - add hover/click explanation labels
     - improve slider vs numeric selection?
     - add highcharter?
     - split project into single modules in different files?
+        - create functions for repetitive tasks
     - make plots downloadable
+    - improve design and layout (seek tutorials; font, colors, ...)
+    - add bottom panel for population selection in posttets calculator?
+    - rename panels and app and also prevalance?
 - riskyr App emulation
     - add mosaic plot with riskyr or ggplot
     - add plot mit den balken da die so dick sind und so

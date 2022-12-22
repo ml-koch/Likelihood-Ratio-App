@@ -81,19 +81,6 @@ rowCallback <- c(
 # Ui ---------------------------------------------------------
 ui <- fluidPage(
   withMathJax(),
-  tags$head(tags$script('
-                        var dimension = [0, 0];
-                        $(document).on("shiny:connected", function(e) {
-                        dimension[0] = window.innerWidth;
-                        dimension[1] = window.innerHeight;
-                        Shiny.onInputChange("dimension", dimension);
-                        });
-                        $(window).resize(function(e) {
-                        dimension[0] = window.innerWidth;
-                        dimension[1] = window.innerHeight;
-                        Shiny.onInputChange("dimension", dimension);
-                        });
-                        ')),
   navbarPage("Navbar",
   ## PPC tab ----------------------------------------------------
     tabPanel("PPC",                  
@@ -134,8 +121,8 @@ ui <- fluidPage(
               selectInput("result_1",
                 label = h4("Test result"),
                 choices = list(
-                  "Positive" = "pos",
-                  "Negative" = "neg"
+                  "Positive" = "positive",
+                  "Negative" = "negative"
                 ),
                 selected = "Positive"
               ),
@@ -165,12 +152,13 @@ ui <- fluidPage(
           tabsetPanel(
             id = "output_tabs",
             tabPanel(
-              title = "Text",
-              p(
-                "The final posttest probability of disease is",
-                textOutput("post_prob")
-              ),
-              textOutput("track"),
+              title = "Text", 
+              br(),
+              verbatimTextOutput("detail_text_out"),
+              br(),
+              uiOutput("post_prob_text"),
+              p("All probabilities are calculated using", 
+                a("likelihood ratios", href = "https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing")),
             ),
             tabPanel(
               title = "Table",
@@ -187,11 +175,7 @@ ui <- fluidPage(
             ),
             tabPanel(
               title = "Plot",
-              plotlyOutput(
-                outputId = "roc_plot",
-                width = "auto",
-                height = "auto"
-              )
+              plotlyOutput(outputId = "roc_plot")
             )
           )
         )
@@ -329,8 +313,8 @@ server <- function(input, output, session) {
         selectInput(shinyInput("result", rv$counter),
           label = h4("Test result"),
           choices = list(
-            "Positive" = "pos",
-            "Negative" = "neg"
+            "Positive" = "positive",
+            "Negative" = "negative"
           ),
           selected = "Positive"
         ),
@@ -397,13 +381,6 @@ server <- function(input, output, session) {
     })
   })
 
-  ### Debugging ------------------------------------------------
-
-  # observer for debugging REMOVE BEFORE FINAL
-  output$track <- renderText({
-    paste("index", rv$counter, "Button", btn$counter)
-  })
-
   ### Post Probability calculation -------------------------------
 
   # Create reactive vectors of test parameters that only trigger
@@ -434,12 +411,29 @@ server <- function(input, output, session) {
   # Create dataframe for use in outputs
   test_data <- eventReactive(input$calc, {
     multiple_post_prob(sens_list(), spec_list(), br_reactive(),
-      res_list(),
-      method = input$method
+                       res_list(),
+                       method = input$method
     )
   })
 
   ### Outputs --------------------------------------------------
+  # Create text output 
+  output$detail_text_out <- renderPrint({
+    if (input$method == "detail" && nrow(test_data()) >= 2) {
+        detail_text <- create_detail_text(test_data())
+        cat(paste0(detail_text), sep = "")}
+  }) %>%
+  bindEvent(input$calc, ignoreInit = TRUE)
+
+
+  output$post_prob_text <- renderUI({
+    req(test_data())
+      withMathJax(paste0("The posttest probability after all tests is: ",
+                        "\\(\\frac{\\text { sensitivity } \\times \\text { base rate }}
+                        {\\text { sensitivity } \\times \\text { base rate } +
+                        (1-\\text { specificity }) \\times(1-\\text { base rate })} = ",
+                        round(test_data()[nrow(test_data()), 7], 4), "\\)"))
+  })
 
   # Create datatable for output
   output$test <- renderDataTable(
@@ -450,6 +444,7 @@ server <- function(input, output, session) {
         style = "bootstrap"
       )
     },
+    # Option for displaying NA; doesnt work when thematic is used 
     options = list(rowCallback = JS(rowCallback))
   )
 
@@ -469,38 +464,32 @@ server <- function(input, output, session) {
   )
 
   # Create ROC plot for fun
-
   plot1 <- eventReactive(input$calc, {
-    plot1 <- ggplot(test_data(), aes(
-      x = 1 - Specificity,
-      y = Sensitivity,
-      color = Result,
-      label = LR
-    )) +
-      geom_point() +
-      xlim(0, 1) +
-      ylim(0, 1) +
-      labs(title = "ROC plot", color = "Test result\n") +
-      scale_color_manual(
-        labels = c("Positive", "Negative"),
-        values = c("blue", "red")
-      ) +
-      geom_abline(slope = 1, intercept = 0, colour = "gray75")
+    plot1 <- ggplot(test_data(), 
+                    aes(x = 1 - Specificity,
+                    y = Sensitivity,
+                    color = test_data()[, 1],
+                    label = LR,
+                    schmabel = Result)) +
+             geom_point() +
+             xlim(0, 1) +
+             ylim(0, 1) +
+             labs(title = "ROC plot", color = "Test \n") + 
+             scale_color_brewer(palette = "Set1") +
+             geom_abline(slope = 1, intercept = 0, 
+                         colour = "gray75")
   })
 
-  observeEvent(input$dimension, {
     output$roc_plot <- renderPlotly({
       ggplotly(
         p = plot1(),
-        tooltip = c("x", "y"),
-        width = (0.8 * as.numeric(input$dimension[1])),
-        height = as.numeric(input$dimension[2])
+        tooltip = c("x", "y", "label", "schmabel")
       )
     })
-  })
-
-  observeEvent(input$calc, {
-    print(res_list())
+  ### Debugging ------------------------------------------------
+  # observer for debugging REMOVE BEFORE FINAL
+  output$track <- renderText({
+    paste("index", rv$counter, "Button", btn$counter)
   })
 
 ## 2x2 -------------------------------------------------------
@@ -510,6 +499,7 @@ server <- function(input, output, session) {
 
     # keep value when switching
     value <- isolate(input$tp)
+    if (is.null(value)) {value <- 5}
 
     if (input$type_inp_tp == "Numeric") {
         numericInput("tp",
@@ -534,6 +524,7 @@ server <- function(input, output, session) {
     
     # keep value when switching
     value <- isolate(input$fp)
+    if (is.null(value)) {value <- 5}
 
     if (input$type_inp_fp == "Numeric") {
         numericInput("fp",
@@ -558,6 +549,7 @@ server <- function(input, output, session) {
 
     # keep value when switching
     value <- isolate(input$tn)
+    if (is.null(value)) {value <- 5}
 
     if (input$type_inp_tn == "Numeric") {
         numericInput("tn",
@@ -582,6 +574,7 @@ server <- function(input, output, session) {
     
     # keep value when switching
     value <- isolate(input$fn)
+    if (is.null(value)) {value <- 5}
 
     if (input$type_inp_fn == "Numeric") {
         numericInput("fn",
@@ -621,7 +614,7 @@ server <- function(input, output, session) {
   })
   # Create table 
   table_2x2 <- reactive({
-    
+    req(input$tp)
     all_pos <- c(input$tp, input$fn, input$tp + input$fn)
     all_neg <- c(input$fp, input$tn, input$fp + input$tn)
     row_names <- c("Positive Test", "Negative Test", "Total")
@@ -630,9 +623,7 @@ server <- function(input, output, session) {
           mutate(horizontal = as.integer(all_pos) + as.integer(all_neg)) %>%
           "colnames<-"(c("", "True Criterion", "False Criterion", "Total"))
   })
-
-
-  ### Debugging --------------------------------------------------
+  ### Outputs --------------------------------------------------
   output$sens_2x2_out <- renderUI({
 
     withMathJax(paste0("The sensitivity of the test is: ",
