@@ -18,7 +18,6 @@ To Do:
     - add xslx download format
     - add true ROC line to plot with different prevalences
     - add hover/click explanation labels
-    - improve slider vs numeric selection?
     - add highcharter?
     - split project into single modules in different files?
         - create functions for repetitive tasks
@@ -36,3 +35,4 @@ To Do:
     - rename posttest probability to ppv or npv?
     - add references list
     - add interactive plotly for riskyr-
+    - add plot labels and naming sheme customization
