@@ -175,7 +175,10 @@ ui <- fluidPage(
             ),
             tabPanel(
               title = "Plot",
-              plotlyOutput(outputId = "roc_plot")
+              plotlyOutput(outputId = "roc_plot"),
+              br(),
+              br(),
+              p("This interactive plot includes a download function in the upper right corner")
             )
           )
         )
@@ -184,6 +187,7 @@ ui <- fluidPage(
     ## 2x2 tab -------------------------------------------------------
     tabPanel("2x2",
       titlePanel("2x2 Table Display"),
+      #sidebar
       sidebarLayout(
         sidebarPanel(
               title = "2 x 2",
@@ -193,25 +197,25 @@ ui <- fluidPage(
                                         test characteristics"),
               h4("True positives"),
               radioButtons("type_inp_tp", label = NULL,
-                           choices = c("Numeric", "Sliders"),
+                           choices = c("Numeric", "Slider"),
                            selected = "Numeric",
                            inline = TRUE),
               uiOutput("tp_UI"),
               h4("False positives"),
               radioButtons("type_inp_fp", label = NULL,
-                           choices = c("Numeric", "Sliders"),
+                           choices = c("Numeric", "Slider"),
                            selected = "Numeric",
                            inline = TRUE),
               uiOutput("fp_UI"),
               h4("True negatives"),
               radioButtons("type_inp_tn", label = NULL,
-                           choices = c("Numeric", "Sliders"),
+                           choices = c("Numeric", "Slider"),
                            selected = "Numeric",
                            inline = TRUE),
               uiOutput("tn_UI"),
               h4("False negatives"),
               radioButtons("type_inp_fn", label = NULL,
-                           choices = c("Numeric", "Sliders"),
+                           choices = c("Numeric", "Slider"),
                            selected = "Numeric",
                            inline = TRUE),
               uiOutput("fn_UI"),
@@ -243,12 +247,107 @@ ui <- fluidPage(
                 a("riskyr", href = "https://cran.r-project.org/web/packages/riskyr/index.html"),  "package")
             ),
             tabPanel(
-              title = "Tree Plot",
-              plotOutput("tree_plot_out")
+              title = "Prism Plot",
+              plotOutput("prism_plot_out"),
+              br(),
+              wellPanel(
+              fluidRow(
+                  column(
+                    selectInput("prism_persp",
+                                  label = "Perspective",
+                                  choices = c("condition" = "cd",
+                                              "decision" = "dc",
+                                              "accuracy" = "ac",
+                                              "condition + decision" = "cddc",
+                                              "condition + accuracy" = "cdac",
+                                              "decision + condition" = "dccd",
+                                              "decision + accuracy" = "dcac",
+                                              "accuracy + condition" = "accd",
+                                              "accuracy + decision" = "acdc"),
+                                  selected = "cddc"
+                                  ),
+                    selectInput("prism_freq_lab",
+                                  label = "Frequency label",
+                                  choices = c("abbr. names + values" = "def",
+                                              "abbr. names" = "abb",
+                                              "names" = "nam",
+                                              "values" = "num",
+                                              "names + values" = "namnum"),
+                                  selected = "num"),
+                    checkboxInput("prism_margins",
+                                  label = "Display info at bottom"),
+                      width = 6),
+                  column(
+                    selectInput("prism_area",
+                                  label = "Box type",
+                                  choices = c("default" = "no",
+                                              "horizontal" = "hr",
+                                              "square" = "sq"),
+                                  selected = "no"),
+                    selectInput("prism_prob_lab",
+                                  label = "Probability label",
+                                  choices = c("abbr. names + values" = "def",
+                                              "abbr. names" = "abb",
+                                              "names" = "nam",
+                                              "values" = "num",
+                                              "names + values" = "namnum",
+                                              "important names" = "min",
+                                              "important names + values" = "mix",
+                                              "none" = "no"),
+                                  selected = "num"),
+                    downloadButton("download_prism", "Download prism plot"),
+                    width = 6)
+                )
+              )
             ),
             tabPanel(
               title = "Area Plot",
-              plotOutput("area_plot_out")
+              plotOutput("area_plot_out"),
+              wellPanel(
+              fluidRow(
+                  column(
+                    selectInput("area_persp",
+                                  label = "Perspective",
+                                  choices = c("condition + decision" = "cddc",
+                                              "condition + accuracy" = "cdac",
+                                              "decision + condition" = "dccd",
+                                              "decision + accuracy" = "dcac",
+                                              "accuracy + condition" = "accd",
+                                              "accuracy + decision" = "acdc"),
+                                  selected = "cddc"
+                                  ),
+                    selectInput("area_freq_lab",
+                                  label = "Frequency label",
+                                  choices = c("abbr. names + values" = "def",
+                                              "abbr. names" = "abb",
+                                              "names" = "nam",
+                                              "values" = "num",
+                                              "names + values" = "namnum"),
+                                  selected = "def"),
+                    checkboxInput("area_margins",
+                                  label = "Display info at bottom"),
+                      width = 6),
+                  column(
+                    selectInput("area_split",
+                                  label = "Split",
+                                  choices = c("vertical" = "v",
+                                              "horizontal" = "h"),
+                                  selected = "no"),
+                    selectInput("area_prob_lab",
+                                  label = "Probability label",
+                                  choices = c("none" = NA,
+                                              "abbr. names + values" = "def",
+                                              "abbr. names" = "abb",
+                                              "names" = "nam",
+                                              "values" = "num",
+                                              "names + values" = "namnum",
+                                              "important names" = "min",
+                                              "important names + values" = "mix")
+                                ),
+                    downloadButton("download_area", "Download area plot"),
+                    width = 6)
+                )
+              )
             )
           )
         )
@@ -263,7 +362,7 @@ ui <- fluidPage(
 # Server -----------------------------------------------------
 server <- function(input, output, session) {
 ## PPC contents --------------------------------------------
-  
+
   ### Tab creation -------------------------------------------
   # Define counter for Tests
   rv <- reactiveValues(counter = 1L)
@@ -424,8 +523,6 @@ server <- function(input, output, session) {
         cat(paste0(detail_text), sep = "")}
   }) %>%
   bindEvent(input$calc, ignoreInit = TRUE)
-
-
   output$post_prob_text <- renderUI({
     req(test_data())
       withMathJax(paste0("The posttest probability after all tests is: ",
@@ -451,7 +548,7 @@ server <- function(input, output, session) {
   # Create download of dataframe
   output$download_data <- downloadHandler(
     filename = function() {
-      paste0("posttest_probability.", input$filetype)
+      paste0("posttest_probability_data.", input$filetype)
     },
     content = function(file) {
       if (input$filetype == "csv") {
@@ -463,7 +560,7 @@ server <- function(input, output, session) {
     }
   )
 
-  # Create ROC plot for fun
+  # Create ROC plot 
   plot1 <- eventReactive(input$calc, {
     plot1 <- ggplot(test_data(), 
                     aes(x = 1 - Specificity,
@@ -510,7 +607,7 @@ server <- function(input, output, session) {
                       step = 1
                     )
       }
-    else if (input$type_inp_tp == "Sliders") {
+    else if (input$type_inp_tp == "Slider") {
         sliderInput("tp",
                     label = NULL,
                     value = value,
@@ -535,7 +632,7 @@ server <- function(input, output, session) {
             step = 1
           )
     }
-    else if (input$type_inp_fp == "Sliders") {
+    else if (input$type_inp_fp == "Slider") {
         sliderInput("fp",
                     label = NULL,
                     value = value,
@@ -560,7 +657,7 @@ server <- function(input, output, session) {
             step = 1
           )
     }
-    else if (input$type_inp_tn == "Sliders") {
+    else if (input$type_inp_tn == "Slider") {
         sliderInput("tn",
                     label = NULL,
                     value = value,
@@ -585,7 +682,7 @@ server <- function(input, output, session) {
             step = 1
           )
     }
-    else if (input$type_inp_fn == "Sliders") {
+    else if (input$type_inp_fn == "Slider") {
         sliderInput("fn",
                     label = NULL,
                     value = value,
@@ -624,6 +721,7 @@ server <- function(input, output, session) {
           "colnames<-"(c("", "True Criterion", "False Criterion", "Total"))
   })
   ### Outputs --------------------------------------------------
+  #### Text and basic table ------------------------------------
   output$sens_2x2_out <- renderUI({
 
     withMathJax(paste0("The sensitivity of the test is: ",
@@ -644,37 +742,96 @@ server <- function(input, output, session) {
 
     table_2x2()
   })
-
-  # Plot outputs
-  output$tree_plot_out <- renderPlot({
-
+  #### riskyr plots ------------------------------------
+  # Create plots
+  prism_plot <- reactive({
     plot_prism(prev = br_2x2(),
                sens = sens_2x2(),
                spec = spec_2x2(),
                N = total(),
+               by = input$prism_persp,
+               f_lbl = input$prism_freq_lab,
+               p_lbl = input$prism_prob_lab,
+               area = input$prism_area,
+               mar_notes = input$prism_margins,
+               arr_c = -3,
                p_scale = TRUE,
                p_lwd = 2,
-               main = NULL
-    )
+               main = NULL)
+    recordPlot()
+  })
+  area_plot <- reactive({
+    plot_area(prev = br_2x2(),
+              sens = sens_2x2(),
+              spec = spec_2x2(),
+              N = total(),
+              by = input$area_persp,
+              f_lbl = input$area_freq_lab,
+              p_lbl = input$area_prob_lab,
+              p_split = input$area_split,
+              mar_notes = input$area_margins,
+              main = NULL)
+  recordPlot()
+  })
+  tab_plot <- reactive({
+    plot_tab(prev = br_2x2(),
+            sens = sens_2x2(),
+            spec = spec_2x2(),
+            N = total(),
+            main = NULL)
+    recordPlot()
+  })
+
+  # output plots
+  output$prism_plot_out <- renderPlot({
+    prism_plot()
   })
   output$area_plot_out <- renderPlot({
-
-    plot_area(prev = br_2x2(),
-               sens = sens_2x2(),
-               spec = spec_2x2(),
-               N = total(),
-               main = NULL
-    )
+    area_plot()
   })
   output$col_table_out <- renderPlot({
-
-    plot_tab(prev = br_2x2(),
-               sens = sens_2x2(),
-               spec = spec_2x2(),
-               N = total(),
-               main = NULL
-    )
+    tab_plot()
   })
+  # Downloads
+  # Prism download button
+  output$download_prism <- downloadHandler(
+    filename = function() {
+      paste0("prism_plot_", Sys.Date(), ".png")
+    },
+    contentType = "image/png",
+    content = function(file) {
+      req(prism_plot())
+      png(file, width = 600, height = 450)
+      replayPlot(prism_plot())
+      dev.off()
+    }
+  )
+  # Area download button
+  output$download_area <- downloadHandler(
+    filename = function() {
+      paste0("area_plot_", Sys.Date(), ".png")
+    },
+    contentType = "image/png",
+    content = function(file) {
+      req(area_plot())
+      png(file, width = 600, height = 450)
+      replayPlot(area_plot())
+      dev.off()
+    }
+  )
+  # Table download button
+  output$download_col_tab <- downloadHandler(
+    filename = function() {
+      paste0("table_plot_", Sys.Date(), ".png")
+    },
+    contentType = "image/png",
+    content = function(file) {
+      req(table_plot())
+      png(file, width = 600, height = 450)
+      replayPlot(table_plot())
+      dev.off()
+    }
+  )
 
 }
 # run App ----------------------------------------------------
