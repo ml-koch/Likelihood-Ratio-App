@@ -184,7 +184,7 @@ ui <- fluidPage(
         )
       )
     ),
-    ## 2x2 tab -------------------------------------------------------
+  ## 2x2 tab -------------------------------------------------------
     tabPanel("2x2",
       titlePanel("2x2 Table Display"),
       #sidebar
@@ -228,6 +228,7 @@ ui <- fluidPage(
         mainPanel(
           tabsetPanel(
             id = "2x2_output_tabs",
+          #### Table Output Panel ----------------------------------------------------
             tabPanel(
               title = "2x2 Table",
               tableOutput("table_2x2_out"),
@@ -240,15 +241,64 @@ ui <- fluidPage(
               br(),
               uiOutput("br_2x2_out")
             ),
+          #### Color Table Output Panel ----------------------------------------------------
             tabPanel(
               title = "Colorized Table",
-              plotOutput("col_table_out"),
+              plotOutput("col_table_out", height = 450, width = 600),
+              br(),
+              wellPanel(
+              fluidRow(
+                  column(
+                    selectInput("tab_persp",
+                                  label = "Perspective",
+                                  choices = c("condition + decision" = "cddc",
+                                              "condition + accuracy" = "cdac",
+                                              "decision + condition" = "dccd",
+                                              "decision + accuracy" = "dcac",
+                                              "accuracy + condition" = "accd",
+                                              "accuracy + decision" = "acdc"),
+                                  selected = "cddc"
+                                  ),
+                    selectInput("tab_freq_lab",
+                                  label = "Frequency label",
+                                  choices = c("abbr. names + values" = "def",
+                                              "abbr. names" = "abb",
+                                              "names" = "nam",
+                                              "values" = "num",
+                                              "names + values" = "namnum",
+                                              "none" = "no"),
+                                  selected = "num"),
+                    checkboxInput("tab_margins",
+                                  label = "Display info at bottom"),
+                      width = 6),
+                  column(
+                    selectInput("tab_pop_split",
+                                  label = "Population split",
+                                  choices = c("horizontal" = "h",
+                                              "vertical" = "v"),
+                                  selected = "v"),
+                    selectInput("tab_prob_lab",
+                                  label = "Probability label",
+                                  choices = c("nothing" = NA,
+                                              "abbr. names + values" = "def",
+                                              "abbr. names" = "abb",
+                                              "names" = "nam",
+                                              "values" = "num",
+                                              "names + values" = "namnum",
+                                              "important names" = "min",
+                                              "no labels" = "no")
+                                ),
+                    downloadButton("download_col_tab", "Download Colorized Table"),
+                    width = 6)
+                )
+              ),
               p("Created using the", 
                 a("riskyr", href = "https://cran.r-project.org/web/packages/riskyr/index.html"),  "package")
             ),
+          #### Prism Output Panel ----------------------------------------------------
             tabPanel(
               title = "Prism Plot",
-              plotOutput("prism_plot_out"),
+              plotOutput("prism_plot_out", height = 450, width = 600),
               br(),
               wellPanel(
               fluidRow(
@@ -295,67 +345,226 @@ ui <- fluidPage(
                                               "important names + values" = "mix",
                                               "none" = "no"),
                                   selected = "num"),
-                    downloadButton("download_prism", "Download prism plot"),
+                    downloadButton("download_prism", "Download Prism Plot"),
                     width = 6)
                 )
-              )
+              ),
+              p("Created using the", 
+                a("riskyr", href = "https://cran.r-project.org/web/packages/riskyr/index.html"),  "package")
             ),
+          #### Area Output Panel ----------------------------------------------------
             tabPanel(
               title = "Area Plot",
-              plotOutput("area_plot_out"),
+              plotOutput("area_plot_out", height = 450, width = 600),
               wellPanel(
-              fluidRow(
-                  column(
-                    selectInput("area_persp",
-                                  label = "Perspective",
-                                  choices = c("condition + decision" = "cddc",
-                                              "condition + accuracy" = "cdac",
-                                              "decision + condition" = "dccd",
-                                              "decision + accuracy" = "dcac",
-                                              "accuracy + condition" = "accd",
-                                              "accuracy + decision" = "acdc"),
-                                  selected = "cddc"
+                fluidRow(
+                    column(
+                      selectInput("area_persp",
+                                    label = "Perspective",
+                                    choices = c("condition + decision" = "cddc",
+                                                "condition + accuracy" = "cdac",
+                                                "decision + condition" = "dccd",
+                                                "decision + accuracy" = "dcac",
+                                                "accuracy + condition" = "accd",
+                                                "accuracy + decision" = "acdc"),
+                                    selected = "cddc"
+                                    ),
+                      selectInput("area_freq_lab",
+                                    label = "Frequency label",
+                                    choices = c("abbr. names + values" = "def",
+                                                "abbr. names" = "abb",
+                                                "names" = "nam",
+                                                "values" = "num",
+                                                "names + values" = "namnum"),
+                                    selected = "def"),
+                      checkboxInput("area_margins",
+                                    label = "Display info at bottom"),
+                        width = 6),
+                    column(
+                      selectInput("area_split",
+                                    label = "Split",
+                                    choices = c("vertical" = "v",
+                                                "horizontal" = "h"),
+                                    selected = "no"),
+                      selectInput("area_prob_lab",
+                                    label = "Probability label",
+                                    choices = c("none" = NA,
+                                                "abbr. names + values" = "def",
+                                                "abbr. names" = "abb",
+                                                "names" = "nam",
+                                                "values" = "num",
+                                                "names + values" = "namnum",
+                                                "important names" = "min",
+                                                "important names + values" = "mix")
                                   ),
-                    selectInput("area_freq_lab",
-                                  label = "Frequency label",
-                                  choices = c("abbr. names + values" = "def",
-                                              "abbr. names" = "abb",
-                                              "names" = "nam",
-                                              "values" = "num",
-                                              "names + values" = "namnum"),
-                                  selected = "def"),
-                    checkboxInput("area_margins",
-                                  label = "Display info at bottom"),
-                      width = 6),
-                  column(
-                    selectInput("area_split",
-                                  label = "Split",
-                                  choices = c("vertical" = "v",
-                                              "horizontal" = "h"),
-                                  selected = "no"),
-                    selectInput("area_prob_lab",
-                                  label = "Probability label",
-                                  choices = c("none" = NA,
-                                              "abbr. names + values" = "def",
-                                              "abbr. names" = "abb",
-                                              "names" = "nam",
-                                              "values" = "num",
-                                              "names + values" = "namnum",
-                                              "important names" = "min",
-                                              "important names + values" = "mix")
-                                ),
-                    downloadButton("download_area", "Download area plot"),
-                    width = 6)
-                )
-              )
+                      downloadButton("download_area", "Download Area Plot"),
+                      width = 6)
+                  )
+              ),
+              p("Created using the", 
+                a("riskyr", href = "https://cran.r-project.org/web/packages/riskyr/index.html"),  "package")
             )
           )
         )
       )
     ),
-    tabPanel("customize plot colors"),
-    tabPanel("customize naming sheme"),
-    tabPanel("About")
+    tabPanel(title = "Customize naming sheme",
+      sidebarLayout(
+        sidebarPanel(
+          h3("Customize the naming sheme"),
+          fluidRow(
+            column(
+              textInput("main_title",
+                        label = "Main Title",
+                        value = "Main Title"),
+              width = 7
+            )
+          ),
+          fluidRow(
+            column(
+              textInput("pop_label",
+                      label = "Population",
+                      value = "Population"),
+              width = 4
+            ),
+            column(
+              textInput("n_label",
+                      label = "N",
+                      value = "N"),
+              width = 3
+            )
+          ),
+          fluidRow(
+            column(
+              textInput("cond_label",
+                      label = "Condition",
+                      value = "Condition"),
+              textInput("dec_label",
+                      label = "Decision",
+                      value = "Decision"),
+              textInput("acc_label",
+                      label = "Accuracy",
+                      value = "Accuracy"),
+              textInput("cases_label",
+                      label = "Cases",
+                      value = "Cases"),
+              width = 4
+            ),
+            column(
+              textInput("cond_true_label",
+                      label = "Condition True",
+                      value = "True"),
+              textInput("dec_pos_label",
+                      label = "Decision Positive",
+                      value = "Positive"),
+              textInput("acc_cor_label",
+                      label = "Decision Correct",
+                      value = "Correct"),
+              textInput("tp_label",
+                      label = "Hit",
+                      value = "TP"),
+              textInput("fn_label",
+                      label = "Miss",
+                      value = "FN"),
+              width = 3
+            ),
+            column(
+              textInput("cond_false_label",
+                      label = "Condition False",
+                      value = "False"),
+              textInput("dec_neg_label",
+                      label = "Decision Negative",
+                      value = "Negative"),
+              textInput("acc_fal_label",
+                      label = "Decision False",
+                      value = "Incorrect"),
+              textInput("fp_label",
+                      label = "False Alarm",
+                      value = "FP"),
+              textInput("tn_label",
+                      label = "Correct rejection",
+                      value = "TN"),
+              width = 3
+            )
+          ),
+          width = 6
+        ),
+        mainPanel(
+         # plotOutput("prism_plot_example", height = 450, width = 600),
+         # plotOutput("area_plot_example", height = 450, width = 600),
+         # width = 6
+        )
+      )
+    ),
+    tabPanel(title = "Customize plot colors"),
+    tabPanel(title = "About",
+      titlePanel("Contact and References"),
+        fluidRow(
+          h3("Contact"),
+          p("You can find me and the source code on", 
+            a("Github", href = "https://github.com/ml-koch/Postttest-Probability-Shiny-App"), "."),
+          p("Feel free to contribute if you would like to or suggest changes that you would like to see."),
+          h3("References"),
+          p("This app is based on R and RShiny."),
+          p("The plots in the '2x2' section were created with the", tags$code("riskyr"), 
+            "package and their customization was reverse-enginered from how they appeared in the",
+            tags$code("riskyrApp"), "."),
+          #### Reference list -------------------------------------------------------------------
+          tags$ul(
+            tags$li(p("Chang W. (2021).", 
+                       tags$i("shinythemes: Themes for Shiny"),
+                       ". R package version 1.2.0,", 
+                       a("https://CRAN.R-project.org/package=shinythemes",
+                         href = "https://CRAN.R-project.org/package=shinythemes"), ".")),
+            tags$li(p("Chang W, Borges Ribeiro B (2021).", 
+                       tags$i("shinydashboard: Create Dashboards with 'Shiny'"),
+                       ". R package version 0.7.2, ", 
+                       a("https://CRAN.R-project.org/package=shinydashboard",
+                         href = "https://CRAN.R-project.org/package=shinydashboard"), ".")),
+            tags$li(p("Chang W, Cheng J, Allaire J, Sievert C, Schloerke B, Xie Y, Allen J,   
+                       McPherson J, Dipert A, Borges B (2022).", 
+                       tags$i("shiny: Web Application Framework for R"),
+                       ". R package version 1.7.3,", 
+                       a("https://CRAN.R-project.org/package=shiny",
+                         href = "https://CRAN.R-project.org/package=shiny"), ".")),
+            tags$li(p("Neth, H., Gaisbauer, F., Gradwohl, N., & Gaissmaier, W. (2022).", 
+                       tags$i("riskyr: Rendering Risk Literacy more Transparent"),
+                       ". Social Psychology and Decision Sciences, University of Konstanz, Germany. 
+                       Computer software (R package version 0.4.0, Aug. 15, 2022). Retrieved from", 
+                       a("https://CRAN.R-project.org/package=riskyr",
+                         href = "https://CRAN.R-project.org/package=riskyr"), ".")),
+            tags$li(p("R Core Team (2022).", 
+                       tags$i("R: A language and environment for statistical computing"),
+                       ". R Foundation for Statistical Computing, Vienna, Austria. URL", 
+                       a("https://www.R-project.org/",
+                         href = "https://www.R-project.org/"), ".")),
+            tags$li(p("Sievert C.", 
+                       tags$i("Interactive Web-Based Data Visualization with R"),
+                       ", plotly, and shiny. Chapman and Hall/CRC Florida, 2020.", 
+                       a("https://plotly-r.com",
+                         href = "https://plotly-r.com"), ".")),
+            tags$li(p("Wickham H.", 
+                       tags$i("ggplot2: Elegant Graphics for Data Analysis"),
+                       ". Springer-Verlag New York, 2016.", 
+                       a("https://ggplot2.tidyverse.org",
+                         href = "https://ggplot2.tidyverse.org"), ".")),
+            tags$li(p("Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R,        
+                       Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL, Miller   
+                       E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V,
+                       Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019).
+                       'Welcome to the tidyverse.'", 
+                       tags$i("Journal of Open Source Software"),
+                       ", *4*(43), 1686. doi:10.21105/joss.01686,", 
+                       a("https://doi.org/10.21105/joss.01686",
+                         href = "https://doi.org/10.21105/joss.01686"), ".")),
+            tags$li(p("Xie Y, Cheng J, Tan X (2022).", 
+                       tags$i("DT: A Wrapper of the JavaScript Library 'DataTables'"),
+                       ". R package version 0.26,", 
+                       a("https://CRAN.R-project.org/package=DT",
+                         href = "https://CRAN.R-project.org/package=DT"), ".")),
+          )
+        )
+      )
   )
 )
 
@@ -757,7 +966,8 @@ server <- function(input, output, session) {
                arr_c = -3,
                p_scale = TRUE,
                p_lwd = 2,
-               main = NULL)
+               main = input$main_title,
+               )
     recordPlot()
   })
   area_plot <- reactive({
@@ -770,7 +980,7 @@ server <- function(input, output, session) {
               p_lbl = input$area_prob_lab,
               p_split = input$area_split,
               mar_notes = input$area_margins,
-              main = NULL)
+              main = input$main_title)
   recordPlot()
   })
   tab_plot <- reactive({
@@ -778,7 +988,12 @@ server <- function(input, output, session) {
             sens = sens_2x2(),
             spec = spec_2x2(),
             N = total(),
-            main = NULL)
+            by = input$tab_persp,
+            p_lbl = input$tab_prob_lab,
+            f_lbl = input$tab_freq_lab,
+            p_split = input$tab_pop_split,
+            mar_notes = input$tab_margins,
+            main = input$main_title)
     recordPlot()
   })
 
@@ -826,13 +1041,32 @@ server <- function(input, output, session) {
     },
     contentType = "image/png",
     content = function(file) {
-      req(table_plot())
+      req(tab_plot())
       png(file, width = 600, height = 450)
-      replayPlot(table_plot())
+      replayPlot(tab_plot())
       dev.off()
     }
   )
-
+  ### Interactive text labels ------------------------------------------------
+  # observe({
+  #   txt$scen_lbl <<- input$main_title
+  #   txt$popu_lbl <<- input$pop_label
+  #   txt$N_lbl <<- input$n_label
+  #   txt$cond_lbl <<- input$cond_label
+  #   txt$cond_true_lbl <<- input$cond_true_label
+  #   txt$cond_false_lbl <<- input$cond_false_label
+  #   txt$dec_lbl <<- input$dec_label
+  #   txt$dec_pos_lbl <<- input$dec_pos_label
+  #   txt$dec_neg_lbl <<- input$dec_neg_label
+  #   txt$acc_lbl <<- input$acc_label
+  #   txt$dec_cor_lbl <<- input$acc_cor_label
+  #   txt$dec_err_lbl <<- input$acc_fal_label
+  #   txt$sdt_lbl <<- input$cases_label
+  #   txt$hi_lbl <<- input$tp_label
+  #   txt$mi_lbl <<- input$fn_label
+  #   txt$fa_lbl <<- input$fp_label
+  #   txt$cr_lbl <<- input$tn_label
+  # })
 }
 # run App ----------------------------------------------------
 
