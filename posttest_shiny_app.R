@@ -12,6 +12,7 @@ library(DT)
 library(plotly)
 #library(thematic)
 library(riskyr)
+library(purrr)
 
 # Global options ----------------------------------------------
 options(shiny.reactlog = TRUE)
@@ -76,7 +77,7 @@ rowCallback <- c(
   "  }",
   "}"
 )
-### Reactive plotly resizing workaround ----------------------
+### one time commands  ----------------------
 
 # Ui ---------------------------------------------------------
 ui <- fluidPage(
@@ -487,12 +488,12 @@ ui <- fluidPage(
               width = 3
             )
           ),
-          width = 6
+          width = 5
         ),
         mainPanel(
-         # plotOutput("prism_plot_example", height = 450, width = 600),
+          plotOutput("prism_plot_ex_lbl", height = 450, width = 600),
          # plotOutput("area_plot_example", height = 450, width = 600),
-         # width = 6
+          width = 7
         )
       )
     ),
@@ -1048,25 +1049,41 @@ server <- function(input, output, session) {
     }
   )
   ### Interactive text labels ------------------------------------------------
-  # observe({
-  #   txt$scen_lbl <<- input$main_title
-  #   txt$popu_lbl <<- input$pop_label
-  #   txt$N_lbl <<- input$n_label
-  #   txt$cond_lbl <<- input$cond_label
-  #   txt$cond_true_lbl <<- input$cond_true_label
-  #   txt$cond_false_lbl <<- input$cond_false_label
-  #   txt$dec_lbl <<- input$dec_label
-  #   txt$dec_pos_lbl <<- input$dec_pos_label
-  #   txt$dec_neg_lbl <<- input$dec_neg_label
-  #   txt$acc_lbl <<- input$acc_label
-  #   txt$dec_cor_lbl <<- input$acc_cor_label
-  #   txt$dec_err_lbl <<- input$acc_fal_label
-  #   txt$sdt_lbl <<- input$cases_label
-  #   txt$hi_lbl <<- input$tp_label
-  #   txt$mi_lbl <<- input$fn_label
-  #   txt$fa_lbl <<- input$fp_label
-  #   txt$cr_lbl <<- input$tn_label
-  # })
+  txt_mod <- reactive({
+    txt_modded <- list_modify(txt, 
+                              scen_lbl = input$main_title,
+                              popu_lbl = input$pop_label,
+                              N_lbl = input$n_label,
+                              cond_lbl = input$cond_label,
+                              cond_true_lbl = input$cond_true_label,
+                              cond_false_lbl = input$cond_false_label,
+                              dec_lbl = input$dec_label,
+                              dec_pos_lbl = input$dec_pos_label,
+                              dec_neg_lbl = input$dec_neg_label,
+                              acc_lbl = input$acc_label,
+                              dec_cor_lbl = input$acc_cor_label,
+                              dec_err_lbl = input$acc_fal_label,
+                              sdt_lbl = input$cases_label,
+                              hi_lbl = input$tp_label,
+                              mi_lbl = input$fn_label,
+                              fa_lbl = input$fp_label,
+                              cr_lbl = input$tn_label
+                              )
+  })
+  # Example plots
+  output$prism_plot_ex_lbl <- renderPlot({
+    plot_prism(prev = 0.5,
+               sens = 0.5,
+               spec = 0.5,
+               N = 1000,
+               by = "cddc",
+               arr_c = -3,
+               f_lbl = "nam",
+               p_lbl = NA,
+               lbl_txt = txt_mod(),
+               main = input$main_title
+               )
+  })
 }
 # run App ----------------------------------------------------
 
