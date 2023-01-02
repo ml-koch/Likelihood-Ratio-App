@@ -10,7 +10,9 @@ Includes:
 - downloadable datatable for all values used in calculation
 - interactive ggplotly ROC plot displaying tests  
 - 2x2 mode with Sensitivitiy calculator
-- 2x2 table with various plots
+- 2x2 table with riskyr plots
+- downloadable plots
+- references
 
 To Do:
 - General 
@@ -21,18 +23,15 @@ To Do:
     - add highcharter?
     - split project into single modules in different files?
         - create functions for repetitive tasks
-    - make plots downloadable
     - improve design and layout (seek tutorials; font, colors, ...)
     - add bottom panel for population selection in posttets calculator?
     - rename panels and app and also prevalance?
+    - clean up code with indents and bracket placing
 - riskyr App emulation
-    - add mosaic plot with riskyr or ggplot
     - add plot mit den balken da die so dick sind und so
     - add other riskyr plots
     - add colorsheme for plots?
     - add color customization
     - add population example slider for main part
     - rename posttest probability to ppv or npv?
-    - add references list
-    - add interactive plotly for riskyr-
     - add plot labels and naming sheme customization
