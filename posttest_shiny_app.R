@@ -9,7 +9,6 @@ library(shinydashboard)
 library(reactlog)
 library(DT)
 library(plotly)
-#library(thematic)
 library(riskyr)
 library(colourpicker)
 
@@ -81,6 +80,7 @@ rowCallback <- c(
 
 # Ui ---------------------------------------------------------
 ui <- fluidPage(
+  theme = shinytheme("yeti"),
   withMathJax(),
   navbarPage("PTP/PPV",
   ## PPC tab ----------------------------------------------------
@@ -140,7 +140,7 @@ ui <- fluidPage(
               actionButton("calc", "Calculate posttest probability",
                 icon = icon("calculator")
               ),
-              themeSelector2(),
+              # themeSelector2(),
             )
           )
         ),
@@ -155,11 +155,14 @@ ui <- fluidPage(
               verbatimTextOutput("detail_text_out"),
               br(),
               uiOutput("post_prob_text"),
+              br(),
+              br(),
               p("All probabilities are calculated using", 
                 a("likelihood ratios", href = "https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing")),
             ),
             tabPanel(
               title = "Table",
+              br(),
               dataTableOutput("test"),
               br(),
               radioButtons(
@@ -677,6 +680,7 @@ ui <- fluidPage(
           h3("Preview"),
           plotOutput("tab_plot_ex_col", height = 225, width = 300),
           plotOutput("prism_plot_ex_col", height = 225, width = 300),
+          plotOutput("curve_plot_ex_col", height = 225, width = 300),
           width = 7
         )
       )
@@ -935,7 +939,7 @@ server <- function(input, output, session) {
       datatable(
         test_data() %>%
           mutate(across(where(is.numeric), round, 4)),
-        style = "bootstrap"
+        options = list(rowCallback = JS(rowCallback))
       )
     },
     # Option for displaying NA; doesnt work when thematic is used 
@@ -1289,7 +1293,7 @@ server <- function(input, output, session) {
       dev.off()
     }
   )
-  ### Interactive text labels ------------------------------------------------
+## Interactive text labels ------------------------------------------------
   observeEvent(input$reset_labels, {
     updateTextInput(session, inputId = "main_title", value = "Main Title")
     updateTextInput(session, inputId = "pop_label", value = "Population")
@@ -1360,7 +1364,7 @@ server <- function(input, output, session) {
             col_pal = pal_mod(),
             main = input$main_title)
   })
-  ### Own colors for riskyr --------------------------------------------------------------------
+## Own colors for riskyr --------------------------------------------------------------------
   pal_mod <- reactive({
     x <- replace(pal, c(1:16), 
                  c(input$col_pop,
@@ -1381,6 +1385,7 @@ server <- function(input, output, session) {
                    input$col_bgr)
                   )
   })
+  # reset button for colors
   observeEvent(input$reset_colors, {
     updateTextInput(session, inputId = "col_pop", value = "#E6E6E6FC")
     updateTextInput(session, inputId = "col_cond_true", value = "lightgoldenrod1")
@@ -1428,6 +1433,20 @@ server <- function(input, output, session) {
             col_pal = pal_mod(),
             lbl_txt = txt_mod()
             )
+  })
+  output$curve_plot_ex_col <- renderPlot({
+    req(input$main_title)
+    plot_curve(prev = 0.3,
+              sens = 0.3,
+              spec = 0.7,
+              N = 1000,
+              what = "all",
+              show_points = TRUE,
+              lbl_txt = txt_mod(),
+              main = input$main_title,
+              col_pal = pal_mod(),
+              uc = 0.05
+              )
   })
 
 }
