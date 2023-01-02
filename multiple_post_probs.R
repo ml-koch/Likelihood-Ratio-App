@@ -1,162 +1,126 @@
 multiple_post_prob <- function(sens, spec, br, 
-                               test_res, method = "fast"){
+                               test_res, method = "fast") {
+
+  # set a variable for the amount of tests
+  n <- length(sens)
   
-  #check if all arguments have the same length
-  # needed to determine how many test there are
+  # determine initial pre-test odds
+  pre_odd <- br / (1 - br)
   
-  if(length(sens) != length(spec)||
-     length(sens) != length(test_res)||
-     length(spec) != length(test_res)){
-    
-    stop("Each argument must contain the same number of elements")
-    
-  }
+  # Initialize output dataframe
+  ## create NA vectors for pretest,LR and posttest
+  ## I used NA to indicate to user that gaps are not computed in "fast"
+  names_v <- c(paste0("Test ", 1:n))
+  pretest_v <- as.numeric(rep(NA, n))
+  LR_v <- as.numeric(rep(NA, n))
+  posttest_v <- as.numeric(rep(NA, n))
   
-  else{
-    # set a variable for the amount of tests
-    n <- length(sens)
+  # enter the base rate as the first probability
+  pretest_v[1] <- br
+  
+  ## Put together dataframe
+  df <- data.frame(names_v, sens, spec, test_res,
+                    LR_v, pretest_v, posttest_v)
+  
+  if (method == "fast") {
     
-    # determine initial pre-test odds
-    pre_odd <- br/(1 - br)
+    # initialize combined LR variable
+    LR_comb <- 1
     
-    # Initialize output dataframe
-    
-    ## create NA vectors for pretest,LR and posttest
-    ## I used NA to user that gaps are not computed in "fast"
-    names_v <- c(paste0("Test ", 1:n))
-    pretest_v <- as.numeric(rep(NA,n))
-    LR_v <- as.numeric(rep(NA,n))
-    posttest_v <- as.numeric(rep(NA,n))
-    
-    pretest_v[1] <- br
-    
-    ## Put together dataframe
-    df <- data.frame(names_v,sens,spec,test_res,
-                     LR_v,pretest_v,posttest_v)
-    
-    if(method == "fast"){
-      
-      # initialize combined LR variable
-      LR_comb <- 1
-      
-      # Iterate through each test (n is the amount of tests)
-      for(i in 1:n){
+    # Iterate through each test (n is the amount of tests)
+    for (i in 1:n) {
+      # Condition for positive test result
+      if (test_res[i] == "positive") {
         
-        # Condition for positive test result
-        if(test_res[i] == "pos"){
-          
-          LR_pos <- sens[i]/(1 - spec[i])
-          
-          df$LR_v[i] <- LR_pos
-          
-          # Multiply LR with the combined LR's
-          LR_comb <- LR_comb * LR_pos
-          
-        }
+        LR_pos <- sens[i] / (1 - spec[i])
         
-        # Condition for negative test results
-        else if(test_res[i] == "neg"){
-          
-          LR_neg <- (1 - sens[i])/spec[i]
-          
-          df$LR_v[i] <- LR_neg
-          
-          # Multiply LR with the combined LR's
-          LR_comb <- LR_comb * LR_neg
-          
-        }
+        df$LR_v[i] <- LR_pos
         
-        # Error if test_res it neither "pos" or "neg"
-        else{stop("Tests must be entered as dichotomous [pos/neg].")}
+        # Multiply LR with the combined LR's
+        LR_comb <- LR_comb * LR_pos
         
       }
       
-      # Multiply combined LR with pre_odds
-      post_odd <- LR_comb * pre_odd
-      
-      post_prob <- post_odd/(1 + post_odd)
-      
-      df$posttest_v[n] <- post_prob
-      
-      colnames(df) <- c("Test Id", "Sensitivity", "Specificity",
-                        "Result", "LR", "Pretest Probability",
-                        "Posttest Probability")
-      
-      return(df)
-      
+      # Condition for negative test results
+      else if (test_res[i] == "negative") {
+        
+        LR_neg <- (1 - sens[i]) / spec[i]
+        
+        df$LR_v[i] <- LR_neg
+        
+        # Multiply LR with the combined LR's
+        LR_comb <- LR_comb * LR_neg
+        
+      }
     }
     
-    # Detail will print and return probabilities at every stage
-    else if(method == "detail"){
-      
-      for(i in 1:n){
+    # Multiply combined LR with pre_odds
+    post_odd <- LR_comb * pre_odd
+    # make post odd into a probability
+    post_prob <- post_odd / (1 + post_odd)
+    
+    df$posttest_v[n] <- post_prob 
+  }
+  
+  # Detail will print and return probabilities at every stage
+  else if (method == "detail") {
+    for (i in 1:n) {
+      if (test_res[i] == "positive") {
+        # The entire process from sens/spec to post_prob is done
+        # for each test to be able to report each post_prob
+        LR_pos <- sens[i] / (1 - spec[i])
         
-        if(test_res[i] == "pos"){
-          
-          # The entire process from sens/spec to post_prob is done
-          # for each test to be able to report each post_prob
-          LR_pos <- sens[i]/(1 - spec[i])
-          
-          post_odd <- LR_pos * pre_odd
-          
-          post_prob <- post_odd/(1 + post_odd)
-          
-          pre_odd <- post_odd
-          
-          df$LR_v[i] <- LR_pos
-          df$posttest_v[i] <- post_prob
-          if(i < n){
-            df$pretest_v[i+1] <- post_prob}
-          
-        }
+        post_odd <- LR_pos * pre_odd
         
-        else if(test_res[i] == "neg"){
-          
-          LR_neg <- (1 - sens[i])/spec[i]
-          
-          post_odd <- LR_neg * pre_odd
-          
-          post_prob <- post_odd/(1 + post_odd)
-          
-          pre_odd <- post_odd
-          
-          df$LR_v[i] <- LR_neg
-          df$posttest_v[i] <- post_prob
-          if(i < n){
-            df$pretest_v[i+1] <- post_prob}
-          
-          }
+        post_prob <- post_odd / (1 + post_odd)
+        
+        pre_odd <- post_odd
+        
+        df$LR_v[i] <- LR_pos
+        df$posttest_v[i] <- post_prob
+        # set post prob as next pre prob in dataframe except for the last test
+        if (i < n) {
+          df$pretest_v[i + 1] <- post_prob}
         
       }
       
-      # Return the complete dataframe with correct names
-      
-      colnames(df) <- c("Test Id", "Sensitivity", "Specificity",
-                        "Result", "LR", "Pretest Probability",
-                        "Posttest Probability")
-      
-      return(df)
+      else if (test_res[i] == "negative") {
+        
+        LR_neg <- (1 - sens[i]) / spec[i]
+        
+        post_odd <- LR_neg * pre_odd
+        
+        post_prob <- post_odd / (1 + post_odd)
+        
+        pre_odd <- post_odd
+        
+        df$LR_v[i] <- LR_neg
+        df$posttest_v[i] <- post_prob
+        # set post prob as next pre prob in dataframe except for the last test
+        if (i < n) {
+          df$pretest_v[i + 1] <- post_prob}
+        
+        }
       
     }
-    
-    # Error if a method other than fast or detail is selected
-    else{stop("Unknown method. 
-              Please enter fast or detail as characters")}
-  
   }
-  
+  # Return the complete dataframe with correct names 
+    colnames(df) <- c("Test Id", "Sensitivity", "Specificity",
+                      "Result", "LR", "Pretest Probability",
+                      "Posttest Probability")
+    return(df)
 }
 
 # ROC plot function -------------------------------------------
-roc_plot <- function(df){
+roc_plot <- function(df) {
   
-  plot1 <- ggplot(df, aes(x = 1-Specificity, y = Sensitivity, 
+  plot1 <- ggplot(df, aes(x = 1 - Specificity, y = Sensitivity, 
                           color = Result,
                           label = LR)) + 
     geom_point() + 
-    xlim(0,1) +
-    ylim(0,1) +
-    labs(title = "ROC plot",color = "Test result\n") +
+    xlim(0, 1) +
+    ylim(0, 1) +
+    labs(title = "ROC plot", color = "Test result\n") +
     scale_color_manual(labels = c("Positive", "Negative"), 
                        values = c("blue", "red")) +
     geom_abline(slope = 1, intercept = 0, colour = "gray75")
@@ -165,115 +129,15 @@ roc_plot <- function(df){
   
 }
 
+# create dynamic text UI for detail output
+create_detail_text <- function(data) {
+  n <- nrow(data)
+  out <- c()
 
-
-
-
-
-# 2x2 function --------------------------------------------
-multiple_post_prob_2x2 <- function(tp, tn, fp, fn, br, 
-                                   test_res, plt = FALSE){
-  
-  sens <- vector()
-  spec <- vector()
-  
-  for(i in 1:length(tp)){
-    
-      pre_sens <- tp[i]/(tp[i]+fn[i])
-      pre_spec <- tn[i]/(tn[i]+fp[i])
-      
-      sens <- append(sens, pre_sens)
-      spec <- append(spec, pre_spec)
-      
+  for (i in 1:n) {
+    string <- paste("The probability of a true positive after a", data[i, 4], "result on", data[i, 1],
+                    "is", round(data[i, 7], 4))
+    out[i] <- paste0(string, "\n")
   }
-  
-  # set a variable for the amount of tests
-  n <- length(sens)
-  # determine initial pre-test odds
-  pre_odd <- br/(1 - br)
-    
-  # Initalize a list
-  list_of_probs <- list()
-  list_of_LR <- list()
-  list_of_br <- list()
-    
-  for(i in 1:n){
-      
-    if(test_res[i] == "pos"){
-        
-      # The entire process from sens/spec to post_prob is done
-      # for each test to be able to calculate each post_prob
-      LR_pos <- sens[i]/(1 - spec[i])
-      pre_prob <- pre_odd/(1 + pre_odd)
-      list_of_br <- append(list_of_br, pre_prob)
-     
-      post_odd <- LR_pos * pre_odd
-        
-      post_prob <- post_odd/(1 + post_odd)
-        
-      pre_odd <- post_odd
-        
-      list_of_probs <- append(list_of_probs, post_prob)
-      list_of_LR <- append(list_of_LR, LR_pos)
-
-      print(paste0("Test ", i, " resulted in a probability of ", 
-                     round(post_prob, 4)))
-        
-      }
-      
-    else if(test_res[i] == "neg"){
-        
-      LR_neg <- (1 - sens[i])/spec[i]
-      pre_prob <- pre_odd/(1 + pre_odd)
-      list_of_br <- append(list_of_br, pre_prob)
-        
-      post_odd <- LR_neg * pre_odd
-        
-      post_prob <- post_odd/(1 + post_odd)
-        
-      pre_odd <- post_odd
-        
-      list_of_probs <- append(list_of_probs, post_prob)
-      list_of_LR <- append(list_of_LR, LR_neg)
-
-      print(paste0("Test ", i, " resulted in a posttest probability of ", 
-                     round(post_prob, 4)))
-        
-    }
-    
-  }
-  
-  df = data.frame(unlist(sens),unlist(spec), unlist(list_of_probs),
-                  unlist(list_of_LR), unlist(list_of_br), test_res)
-  colnames(df) <- c("Sensitivity", "Specificity",
-                    "Posttest Probability", "LR",
-                    "Pretest Probability", "Test_result")
-  
-  if(plt){
-  
-  plot1 <- ggplot(df, aes(x = 1-Specificity, y = Sensitivity, 
-                          color = Test_result,
-                          label = LR)) + 
-    geom_point() + 
-    xlim(0,1) +
-    ylim(0,1) +
-    labs(title = "ROC plot",color = "Test result\n") +
-    scale_color_manual(labels = c("Positive", "Negative"), 
-                       values = c("blue", "red")) +
-    geom_abline(slope = 1, intercept = 0, colour = "gray75")
-  
-  plot2 <- ggplotly(plot1, tooltip = c("y","x","label"))
-  
-  output <- list(plot2, df)
-  
-  return(output)
-  
-  }
-  
-  else{
-    
-    return(df)
-    
-  }
-    
+  return(out)
 }
