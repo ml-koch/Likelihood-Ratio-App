@@ -11,6 +11,7 @@ library(DT)
 library(plotly)
 library(riskyr)
 library(colourpicker)
+library(shinyBS)
 
 
 # Global options ----------------------------------------------
@@ -102,6 +103,8 @@ ui <- fluidPage(
                         max = 1,
                         step = 0.1
                       ),
+              bsTooltip(id = "sens_1", title = "Probability of correct detection of true condition <br>P(Dec pos|Cond true)",
+                        placement = "right", options = list(container = "body")),
                numericInput("spec_1",
                           label = h4("Specificity"),
                           value = 0.5,
@@ -109,6 +112,8 @@ ui <- fluidPage(
                           max = 1,
                           step = 0.1
                         ),
+              bsTooltip(id = "spec_1", title = "Probability of correct detection of false condition <br>P(Dec neg|Cond false)",
+                        placement = "right", options = list(container = "body")),
               numericInput("br",
                           label = h4("Base rate"),
                           value = 0.5,
@@ -116,6 +121,8 @@ ui <- fluidPage(
                           max = 1,
                           step = 0.1
                         ),
+              bsTooltip(id = "spec_1", title = "Probability of true condition (prevalence) <br>P(Cond true)",
+                        placement = "right", options = list(container = "body")),
               selectInput("result_1",
                 label = h4("Test result"),
                 choices = list(
@@ -124,6 +131,8 @@ ui <- fluidPage(
                 ),
                 selected = "Positive"
               ),
+              bsTooltip(id = "result_1", title = "Currently only binary tests are supported",
+                        placement = "right", options = list(container = "body")),
               selectInput("method",
                 label = h4("Method"),
                 choices = list(
@@ -132,6 +141,8 @@ ui <- fluidPage(
                 ),
                 selected = "Fast"
               ),
+              bsTooltip(id = "method", title = "Fast = Only the final PTP will be returned <br>Detail = PTP will be calculated after each test",
+                        placement = "right", options = list(container = "body")),
               actionButton("add", "Add test",
                 icon = icon("plus-circle")
               ),
