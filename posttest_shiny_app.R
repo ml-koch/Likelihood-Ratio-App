@@ -921,10 +921,13 @@ server <- function(input, output, session) {
 
   # Create dataframe for use in outputs
   test_data <- eventReactive(input$calc, {
-    multiple_post_prob(sens_list(), spec_list(), br_reactive(),
-                       res_list(),
-                       method = input$method
-    )
+
+    if (input$method == "fast") {
+      multiple_post_prob_fast(sens_list(), spec_list(), br_reactive(), res_list())
+    }
+    else if (input$method == "detail") {
+      multiple_post_prob_detail(sens_list(), spec_list(), br_reactive(), res_list())
+    }
   })
 
   ### Outputs --------------------------------------------------

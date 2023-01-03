@@ -1,5 +1,4 @@
-multiple_post_prob <- function(sens, spec, br, 
-                               test_res, method = "fast") {
+multiple_post_prob_fast <- function(sens, spec, br, test_res) {
 
   # set a variable for the amount of tests
   n <- length(sens)
@@ -8,7 +7,7 @@ multiple_post_prob <- function(sens, spec, br,
   pre_odd <- br / (1 - br)
   
   # Initialize output dataframe
-  ## create NA vectors for pretest,LR and posttest
+  ## create NA vectors for pretest, LR and posttest
   ## I used NA to indicate to user that gaps are not computed in "fast"
   names_v <- c(paste0("Test ", 1:n))
   pretest_v <- as.numeric(rep(NA, n))
@@ -21,94 +20,123 @@ multiple_post_prob <- function(sens, spec, br,
   ## Put together dataframe
   df <- data.frame(names_v, sens, spec, test_res,
                     LR_v, pretest_v, posttest_v)
+    
+  # initialize combined LR variable
+  LR_comb <- 1
   
-  if (method == "fast") {
-    
-    # initialize combined LR variable
-    LR_comb <- 1
-    
-    # Iterate through each test (n is the amount of tests)
-    for (i in 1:n) {
-      # Condition for positive test result
-      if (test_res[i] == "positive") {
-        
-        LR_pos <- sens[i] / (1 - spec[i])
-        
-        df$LR_v[i] <- LR_pos
-        
-        # Multiply LR with the combined LR's
-        LR_comb <- LR_comb * LR_pos
-        
-      }
+  # Iterate through each test (n is the amount of tests)
+  for (i in 1:n) {
+    # Condition for positive test result
+    if (test_res[i] == "positive") {
       
-      # Condition for negative test results
-      else if (test_res[i] == "negative") {
-        
-        LR_neg <- (1 - sens[i]) / spec[i]
-        
-        df$LR_v[i] <- LR_neg
-        
-        # Multiply LR with the combined LR's
-        LR_comb <- LR_comb * LR_neg
-        
-      }
+      LR_pos <- sens[i] / (1 - spec[i])
+      
+      df$LR_v[i] <- LR_pos
+      
+      # Multiply LR with the combined LR's
+      LR_comb <- LR_comb * LR_pos
+      
     }
     
-    # Multiply combined LR with pre_odds
-    post_odd <- LR_comb * pre_odd
-    # make post odd into a probability
-    post_prob <- post_odd / (1 + post_odd)
-    
-    df$posttest_v[n] <- post_prob 
+    # Condition for negative test results
+    else if (test_res[i] == "negative") {
+      
+      LR_neg <- (1 - sens[i]) / spec[i]
+      
+      df$LR_v[i] <- LR_neg
+      
+      # Multiply LR with the combined LR's
+      LR_comb <- LR_comb * LR_neg
+      
+    }
   }
   
+  # Multiply combined LR with pre_odds
+  post_odd <- LR_comb * pre_odd
+  # make post odd into a probability
+  post_prob <- post_odd / (1 + post_odd)
+  
+  df$posttest_v[n] <- post_prob 
+
+# Return the complete dataframe with correct names 
+  colnames(df) <- c("Test Id", "Sensitivity", "Specificity",
+                    "Result", "LR", "Pretest Probability",
+                    "Posttest Probability")
+  return(df)
+}
+
+multiple_post_prob_detail <- function(sens, spec, br, test_res) {
+
+  # set a variable for the amount of tests
+  n <- length(sens)
+  
+  # determine initial pre-test odds
+  pre_odd <- br / (1 - br)
+  
+  # Initialize output dataframe
+  ## create NA vectors for pretest, LR and posttest
+  ## I used NA to indicate to user that gaps are not computed in "fast"
+  names_v <- c(paste0("Test ", 1:n))
+  pretest_v <- as.numeric(rep(NA, n))
+  LR_v <- as.numeric(rep(NA, n))
+  posttest_v <- as.numeric(rep(NA, n))
+  
+  # enter the base rate as the first probability
+  pretest_v[1] <- br
+  
+  ## Put together dataframe
+  df <- data.frame(names_v, sens, spec, test_res,
+                    LR_v, pretest_v, posttest_v)
+
   # Detail will print and return probabilities at every stage
-  else if (method == "detail") {
-    for (i in 1:n) {
-      if (test_res[i] == "positive") {
-        # The entire process from sens/spec to post_prob is done
-        # for each test to be able to report each post_prob
-        LR_pos <- sens[i] / (1 - spec[i])
-        
-        post_odd <- LR_pos * pre_odd
-        
-        post_prob <- post_odd / (1 + post_odd)
-        
-        pre_odd <- post_odd
-        
-        df$LR_v[i] <- LR_pos
-        df$posttest_v[i] <- post_prob
-        # set post prob as next pre prob in dataframe except for the last test
-        if (i < n) {
-          df$pretest_v[i + 1] <- post_prob}
-        
-      }
+  for (i in 1:n) {
+    if (test_res[i] == "positive") {
+      # The entire process from sens/spec to post_prob is done
+      # for each test to be able to report each post_prob
+      LR_pos <- sens[i] / (1 - spec[i])
       
-      else if (test_res[i] == "negative") {
-        
-        LR_neg <- (1 - sens[i]) / spec[i]
-        
-        post_odd <- LR_neg * pre_odd
-        
-        post_prob <- post_odd / (1 + post_odd)
-        
-        pre_odd <- post_odd
-        
-        df$LR_v[i] <- LR_neg
-        df$posttest_v[i] <- post_prob
-        # set post prob as next pre prob in dataframe except for the last test
-        if (i < n) {
-          df$pretest_v[i + 1] <- post_prob}
-        
-        }
+      post_odd <- LR_pos * pre_odd
       
+      post_prob <- post_odd / (1 + post_odd)
+      
+      pre_odd <- post_odd
+      
+      df$LR_v[i] <- LR_pos
+      df$posttest_v[i] <- post_prob
+      # set post prob as next pre prob in dataframe except for the last test
+      if (i < n) {
+        df$pretest_v[i + 1] <- post_prob}
+    }
+    else if (test_res[i] == "negative") {
+      
+      LR_neg <- (1 - sens[i]) / spec[i]
+      
+      post_odd <- LR_neg * pre_odd
+      
+      post_prob <- post_odd / (1 + post_odd)
+      
+      pre_odd <- post_odd
+      
+      df$LR_v[i] <- LR_neg
+      df$posttest_v[i] <- post_prob
+      # set post prob as next pre prob in dataframe except for the last test
+      if (i < n) {
+        df$pretest_v[i + 1] <- post_prob}
     }
   }
-  # Return the complete dataframe with correct names 
-    colnames(df) <- c("Test Id", "Sensitivity", "Specificity",
-                      "Result", "LR", "Pretest Probability",
-                      "Posttest Probability")
-    return(df)
+# Return the complete dataframe with correct names 
+  colnames(df) <- c("Test Id", "Sensitivity", "Specificity",
+                    "Result", "LR", "Pretest Probability",
+                    "Posttest Probability")
+  return(df)
+}
+
+multiple_post_prob_tree <- function(sens, spec, br, test_res) {
+
+# Use data.tree object
+# maybe first create dataframe?
+# create columns for tests with test name and pos/neg
+# also create columns with probabilities after each test for each path?
 }
 
 # ROC plot function -------------------------------------------
