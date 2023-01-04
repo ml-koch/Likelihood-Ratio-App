@@ -12,6 +12,8 @@ library(plotly)
 library(riskyr)
 library(colourpicker)
 library(shinyBS)
+library(ggraph)
+library(igraph)
 
 
 # Global options ----------------------------------------------
@@ -143,6 +145,8 @@ ui <- fluidPage(
               ),
               bsTooltip(id = "method", title = "Fast = Only the final PTP will be returned <br>Detail = PTP will be calculated after each test",
                         placement = "right", options = list(container = "body")),
+              checkboxInput(inputId = "create_tree",
+                            label = "Create complete Tree"),
               actionButton("add", "Add test",
                 icon = icon("plus-circle")
               ),
@@ -183,12 +187,33 @@ ui <- fluidPage(
                 selected = "csv"
               ),
               br(),
-              downloadButton("download_data", "Download data")
+              downloadButton("download_data", "Download data"),
+              br(),
+              br(),
+              br(),
+              dataTableOutput("tree_data"),
+              br(),
+              radioButtons(
+                inputId = "filetype_tree",
+                label = "Select filetype:",
+                choices = c("csv", "tsv"),
+                selected = "csv"
+              ),
+              br(),
+              downloadButton("download_tree_data", "Download Tree data")
             ),
             tabPanel(
-              title = "Plot",
+              title = "ROC Plot",
               br(),
               plotlyOutput(outputId = "roc_plot"),
+              br(),
+              br(),
+              p("This interactive plot includes a download function in the upper right corner")
+            ),
+            tabPanel(
+              title = "Tree Plot",
+              br(),
+              plotOutput(outputId = "tree_plot_out"),
               br(),
               br(),
               p("This interactive plot includes a download function in the upper right corner")
@@ -930,14 +955,21 @@ server <- function(input, output, session) {
     }
   })
 
+  # create dataframe for tree
+  tree_data <- eventReactive(input$calc, {
+    req(input$create_tree)
+    multiple_post_prob_tree(sens_list(), spec_list(), br_reactive(), res_list())
+  })
+
   ### Outputs --------------------------------------------------
   # Create text output 
   output$detail_text_out <- renderPrint({
-    if (input$method == "detail" && nrow(test_data()) >= 2) {
+    if (input$method != "fast" && nrow(test_data()) >= 2) {
         detail_text <- create_detail_text(test_data())
         cat(paste0(detail_text), sep = "")}
   }) %>%
-  bindEvent(input$calc, ignoreInit = TRUE)
+      bindEvent(input$calc, ignoreInit = TRUE)
+
   output$post_prob_text <- renderUI({
     req(test_data())
       withMathJax(paste0("The posttest probability after all tests is: ",
@@ -948,17 +980,13 @@ server <- function(input, output, session) {
   })
 
   # Create datatable for output
-  output$test <- renderDataTable(
-    {
-      datatable(
-        test_data() %>%
-          mutate(across(where(is.numeric), round, 4)),
-        options = list(rowCallback = JS(rowCallback))
-      )
-    },
-    # Option for displaying NA; doesnt work when thematic is used 
-    options = list(rowCallback = JS(rowCallback))
-  )
+  output$test <- renderDataTable({
+    datatable(
+      test_data() %>%
+        mutate(across(where(is.numeric), round, 4)),
+      options = list(rowCallback = JS(rowCallback))
+    )
+  })
 
   # Create download of dataframe
   output$download_data <- downloadHandler(
@@ -971,6 +999,30 @@ server <- function(input, output, session) {
       }
       if (input$filetype == "tsv") {
         write_tsv(test_data(), file)
+      }
+    }
+  )
+  # Create datatable for treeoutput
+  output$tree_data <- renderDataTable({
+    req(input$create_tree)
+    datatable(
+      data.frame(tree_data()[2]) %>%
+        mutate(across(where(is.numeric), round, 4)),
+      options = list(rowCallback = JS(rowCallback))
+    )
+  })
+
+  # Create download of dataframe
+  output$download_tree_data <- downloadHandler(
+    filename = function() {
+      paste0("tree_data.", input$filetype_tree)
+    },
+    content = function(file) {
+      if (input$filetype_tree == "csv") {
+        write_csv(data.frame(tree_data()[2]), file)
+      }
+      if (input$filetype_tree == "tsv") {
+        write_tsv(data.frame(tree_data()[2]), file)
       }
     }
   )
@@ -992,12 +1044,34 @@ server <- function(input, output, session) {
                          colour = "gray75")
   })
 
-    output$roc_plot <- renderPlotly({
-      ggplotly(
-        p = plot1(),
-        tooltip = c("x", "y", "label", "schmabel")
-      )
-    })
+  output$roc_plot <- renderPlotly({
+    ggplotly(
+      p = plot1(),
+      tooltip = c("x", "y", "label", "schmabel")
+    )
+  })
+
+  #create Tree plot
+  tree_plot <- eventReactive(input$calc, {
+    req(tree_data())
+    tree_data_df_1 <- data.frame(tree_data()[1])
+    tree_data_df_2 <- data.frame(tree_data()[2])
+    g <- graph_from_data_frame(tree_data_df_1, vertices = tree_data_df_2) 
+    ggraph(g) +
+      geom_edge_link0(edge_width = 0.1, alpha = 0.2) +
+      geom_node_point(aes(col = tree_data_df_2$Test_result)) +
+      geom_node_text(aes(label = tree_data_df_2$Posttest_probability), size = 5, check_overlap = FALSE, nudge_y = -0.1)
+  })
+
+  # output tree plot
+  output$tree_plot_out <- renderPlot({
+    req(input$create_tree)
+    tree_plot()
+    # ggplotly(
+    #   p = tree_plot(),
+    #   tooltip = c("x", "y", "label", "colour")
+    # )
+  })
   ### Debugging ------------------------------------------------
   # observer for debugging REMOVE BEFORE FINAL
   output$track <- renderText({

@@ -133,11 +133,146 @@ multiple_post_prob_detail <- function(sens, spec, br, test_res) {
 
 multiple_post_prob_tree <- function(sens, spec, br, test_res) {
 
-# Use data.tree object
-# maybe first create dataframe?
-# create columns for tests with test name and pos/neg
-# also create columns with probabilities after each test for each path?
+  # get amount of tests
+  n <- length(sens)
+
+  # create edges of tree
+  edges <- data.frame(from = "Prevalence",
+                      to = paste("T",
+                                  1,
+                                  c("P", "N"),
+                                  sep = ""))
+  if (n > 1) {
+    for (i in 2:n) {
+      # Which are the preceeding test names?
+      preceeding <- edges[grep(paste("T", i - 1, sep = ""), edges$to), 2]
+
+      exp_gr <- expand_grid(preceeding,  paste("T",
+                                          i,
+                                          c("P", "N"),
+                                          sep = ""))
+
+      # Put into partial dataframe
+      temp <- data.frame(from = exp_gr[, 1],
+                         to = paste(unlist(exp_gr[, 1]), 
+                                    unlist(exp_gr[, 2]),
+                                    sep = "_")
+                        )
+      colnames(temp) <- c("from", "to")
+      edges <- rbind(edges, temp)
+    }
+  }
+
+  # create a dataframe for vertices by using ids created for edges
+  vertices <- data.frame(id = c(edges$from[1], edges$to),
+                         test = NA,
+                         sens = NA,
+                         spec = NA,
+                         LR = NA,
+                         pretest_prob = NA,
+                         prob = NA,
+                         result = NA,
+                         odd = NA,
+                         parents = NA)
+  # create test result from names
+  vertices[2:nrow(vertices), ] <- vertices %>%
+                                  filter(row_number() > 1) %>%
+                                  mutate(result = substr(id, nchar(id), nchar(id))) 
+  # create test from id
+  vertices[2:nrow(vertices), ] <- vertices %>%
+                                  filter(row_number() > 1) %>%
+                                  mutate(test = substr(id, nchar(id) - 2, nchar(id) - 1)) 
+  # create probabilities at every step
+  # LR vector
+  LR_pos <- c()
+  LR_neg <- c()
+  # calculate both LR for every test
+  for (i in 1:n) {
+    LR_pos_temp <- sens[i] / (1 - spec[i])
+    LR_neg_temp <- (1 - sens[i]) / spec[i]
+
+    LR_pos[i] <- LR_pos_temp
+    LR_neg[i] <- LR_neg_temp
+
+    # fill in LR
+    vertices$LR[which(vertices$test == paste0("T", i) & vertices$result == "P")] <- LR_pos[i]
+    vertices$LR[which(vertices$test == paste0("T", i) & vertices$result == "N")] <- LR_neg[i]
+
+    # also add sens and spec
+    vertices$sens[which(vertices$test == paste0("T", i))] <- sens[i]
+    vertices$spec[which(vertices$test == paste0("T", i))] <- spec[i]
+  }
+
+  # setup prevalence
+  vertices$prob[1] <- br
+  pre_odd <- br / (1 - br)
+  vertices$odd[1] <- pre_odd
+
+  # calculate probabilities
+  for (i in 1:n) {
+    # special case for first test since prevalence does not fit into naming scheme
+    if (i == 1) {
+      #storing current path for convenience 
+      current_path_pos <- which(vertices$id == "T1P")
+      current_path_neg <- which(vertices$id == "T1N")
+
+      post_odd_pos <- LR_pos[i] * pre_odd
+      post_odd_neg <- LR_neg[i] * pre_odd
+
+      post_prob_pos <- post_odd_pos / (1 + post_odd_pos)
+      post_prob_neg <- post_odd_neg / (1 + post_odd_neg)
+      
+      vertices$prob[current_path_pos] <- post_prob_pos
+      vertices$prob[current_path_neg] <- post_prob_neg
+      vertices$odd[current_path_pos] <- post_odd_pos
+      vertices$odd[current_path_neg] <- post_odd_neg
+
+      # parent paths
+      vertices$parents[current_path_pos] <- "Prevalence"
+      vertices$parents[current_path_neg] <- "Prevalence"
+
+      # pretest_prob
+      vertices$pretest_prob[current_path_pos] <- br
+      vertices$pretest_prob[current_path_neg] <- br
+    }
+    else {
+      # now indexed by which test in extra column can be used
+      parent_paths <- vertices$id[which(vertices$test == paste0("T", i - 1))]
+      child_paths <- vertices$id[which(vertices$test == paste0("T", i))]
+      # for each unique parent node 
+      for (j in seq_along(parent_paths)) {
+        # get the pre_odd and pre_prob from the respective parent path
+        pre_odd <- vertices$odd[which(vertices$id == parent_paths[j])]
+        pre_prob <- vertices$prob[which(vertices$id == parent_paths[j])]
+        #storing current child paths for convenience 
+        current_path_pos <- which(vertices$id == child_paths[j * 2 - 1])
+        current_path_neg <- which(vertices$id == child_paths[j * 2])
+
+        post_odd_pos <- LR_pos[i] * pre_odd
+        post_odd_neg <- LR_neg[i] * pre_odd
+        post_prob_pos <- post_odd_pos / (1 + post_odd_pos)
+        post_prob_neg <- post_odd_neg / (1 + post_odd_neg)
+
+        vertices$prob[current_path_pos] <- post_prob_pos
+        vertices$prob[current_path_neg] <- post_prob_neg
+        vertices$odd[current_path_pos] <- post_odd_pos
+        vertices$odd[current_path_neg] <- post_odd_neg
+        vertices$pretest_prob[current_path_pos] <- pre_prob
+        vertices$pretest_prob[current_path_neg] <- pre_prob
+
+        # parent paths
+        vertices$parents[current_path_pos] <- parent_paths[j]
+        vertices$parents[current_path_neg] <- parent_paths[j]
+      }
+    }
+  }
+  colnames(vertices) <- c("Test_path", "Test_name", "Sensitivitiy",
+                          "Specificity", "LR", "Pretest_probability",
+                          "Posttest_probability", "Test_result", 
+                          "Posttest_odds", "Parent_path")
+  return(list(edges, vertices))
 }
+
 
 # ROC plot function -------------------------------------------
 roc_plot <- function(df) {

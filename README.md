@@ -26,3 +26,6 @@ To Do:
     - improve design and layout (seek tutorials; font, colors, ...)
     - rename panels and app and also prevalance?
     - clean up code with indents and bracket placing
+    - rewrite functions with pipes
+    - make tree diagram interactive
+    - customize tree diagram with nice colors
