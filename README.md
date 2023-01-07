@@ -13,25 +13,20 @@ Includes:
 - 2x2 table with riskyr plots
 - downloadable plots
 - references
+- color and label customization for riskyr plots
+- interactive customizable ggraph tree plot
 
 To Do:
 - General 
     - tests with multiple possible outcomes
     - add xslx download format
-    - add true ROC line to plot with different prevalences
-    - add hover/click explanation labels
+    - add hover/click explanation labels to more fields
     - add highcharter?
     - split project into single modules in different files?
         - create functions for repetitive tasks
     - improve design and layout (seek tutorials; font, colors, ...)
-    - add bottom panel for population selection in posttets calculator?
     - rename panels and app and also prevalance?
     - clean up code with indents and bracket placing
-- riskyr App emulation
-    - add plot mit den balken da die so dick sind und so
-    - add other riskyr plots
-    - add colorsheme for plots?
-    - add color customization
-    - add population example slider for main part
-    - rename posttest probability to ppv or npv?
-    - add plot labels and naming sheme customization
+    - rewrite functions with pipes
+    - customize tree diagram with background, gridlines, layout options
+    - add similar customization to ROC plot

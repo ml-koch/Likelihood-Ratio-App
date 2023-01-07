@@ -129,7 +129,7 @@ multiple_post_prob_2x2 <- function(tp, tn, fp, fn, br,
   sens <- vector()
   spec <- vector()
   
-  for(i in 1:length(tp)){
+  for (i in seq_along(tp)) {
     
     pre_sens <- tp[i]/(tp[i]+fn[i])
     pre_spec <- tn[i]/(tn[i]+fp[i])
@@ -262,7 +262,7 @@ multiple_post_prob_2x2 <- function(tp, tn, fp, fn, br,
   sens <- vector()
   spec <- vector()
   
-  for(i in 1:length(tp)){
+  for (i in seq_along(tp)) {
     
       pre_sens <- tp[i]/(tp[i]+fn[i])
       pre_spec <- tn[i]/(tn[i]+fp[i])
