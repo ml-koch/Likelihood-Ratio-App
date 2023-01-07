@@ -7,6 +7,8 @@ Includes a text output, datatable output, ROC plot and a tree plot detailing all
 
 The "2x2" tab contains several visualizations of binary decisions from the 'riskyr' package. These can be customized in name and color. 
 
+The app can be accessed online here: https://ml-koch.shinyapps.io/Posttest-Probability-Shiny-App/
+
 Includes:
 - Posttest probability calculator for n tests using likelihood ratios
 - downloadable datatable for all values used in calculation
