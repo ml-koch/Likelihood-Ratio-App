@@ -219,6 +219,7 @@ ui <- fluidPage(
               wellPanel(
                 fluidRow(
                   column(
+                    br(),
                     checkboxInput(inputId = "tree_ribs",
                               label = "Include ribbons"),
                     width = 4),
@@ -228,7 +229,74 @@ ui <- fluidPage(
                                 choices = c("Set1", "Set2", "Set3", "Pastel1",
                                             "Pastel2", "Dark2", "Accent"),
                                 selected = "Set3"),
-                    width = 4)),
+                  width = 4)),
+                fluidRow(
+                  column(
+                    br(),
+                    checkboxInput(inputId = "tree_custom_edge",
+                              label = "Custom edge color"),
+                    width = 4),
+                  column(
+                    colourInput("tree_edge_col",
+                          showColour = "background",
+                          label = "Edge color",
+                          value = "grey"),
+                  width = 4)),
+                fluidRow(
+                  column(
+                    br(),
+                    checkboxInput(inputId = "tree_major_grid",
+                              label = "Include major grid"),
+                    width = 4),
+                  column(
+                    colourInput("tree_grid_maj_col",
+                          showColour = "background",
+                          label = "Major grid color",
+                          value = "grey"),
+                  width = 4)),
+                fluidRow(
+                  column(
+                    br(),
+                    checkboxInput(inputId = "tree_minor_grid",
+                              label = "Include minor grid"),
+                    width = 4),
+                  column(
+                   colourInput("tree_grid_min_col",
+                          showColour = "background",
+                          label = "Minor grid color",
+                          value = "grey"),
+                  width = 4)),
+                fluidRow(
+                  column(
+                    br(),
+                    checkboxInput(inputId = "tree_background",
+                              label = "Custom background color"),
+                    width = 4),
+                  column(
+                   colourInput("tree_background_col",
+                          showColour = "background",
+                          label = "Background color",
+                          value = "grey"),
+                  width = 4)),
+                fluidRow(
+                  column(
+                    br(),
+                    checkboxInput(inputId = "tree_theme",
+                              label = "Custom theme"),
+                    width = 4),
+                  column(
+                   selectInput(inputId = "tree_custom_theme",
+                                label = "Select theme",
+                                choices = c("Graph" = "theme_graph()",
+                                            "BW" = "theme_bw()", 
+                                            "Light" = "theme_light()", 
+                                            "Linedraw" = "theme_linedraw()", 
+                                            "Minimal" = "theme_minimal()",
+                                            "Classic" = "theme_classic()", 
+                                            "Void" = "theme_void()", 
+                                            "Dark" = "theme_dark()"),
+                                selected = "Graph"),
+                  width = 4)),
                 fluidRow(p("This interactive plot includes a download function in the upper right corner"))
                 ),
               br()
@@ -738,101 +806,100 @@ ui <- fluidPage(
     ),
   ## About -----------------------------------------------------------------
     tabPanel(title = "Contact & References",
-      titlePanel("Contact and References"),
-        fluidRow(
-          column(
-            h3("Contact"),
-            p("You can find me and the source code on", 
-              a("Github", href = "https://github.com/ml-koch/Postttest-Probability-Shiny-App"), "."),
-            p("Feel free to contribute if you would like to or suggest changes that you would like to see."),
-            h3("References"),
-            p("This app is based on R and RShiny."),
-            p("The plots in the '2x2' section were created with the", tags$code("riskyr"), 
-              "package and their customization was reverse-enginered from how they appeared in the",
-              tags$code("riskyrApp"), "."),
-          #### Reference list -------------------------------------------------------------------
-            tags$ul(
-              tags$li(p("Attali D (2022).", 
-                        tags$i("colourpicker: A Colour Picker Tool for Shiny and for Selecting Colours in Plots"),
-                        "R package version 1.2.0,", 
-                        a("https://CRAN.R-project.org/package=colourpicker",
-                          href = "https://CRAN.R-project.org/package=colourpicker"), ".")),
-              tags$li(p("Bailey E (2022).", 
-                        tags$i("shinyBS: Twitter Bootstrap Components for Shiny"),
-                        "R package version 0.61.1,", 
-                        a("https://CRAN.R-project.org/package=shinyBS",
-                          href = "https://CRAN.R-project.org/package=shinyBS"), ".")),
-              tags$li(p("Chang W. (2021).", 
-                        tags$i("shinythemes: Themes for Shiny"),
-                        ". R package version 1.2.0,", 
-                        a("https://CRAN.R-project.org/package=shinythemes",
-                          href = "https://CRAN.R-project.org/package=shinythemes"), ".")),
-              tags$li(p("Chang W, Borges Ribeiro B (2021).", 
-                        tags$i("shinydashboard: Create Dashboards with 'Shiny'"),
-                        ". R package version 0.7.2, ", 
-                        a("https://CRAN.R-project.org/package=shinydashboard",
-                          href = "https://CRAN.R-project.org/package=shinydashboard"), ".")),
-              tags$li(p("Chang W, Cheng J, Allaire J, Sievert C, Schloerke B, Xie Y, Allen J,   
-                        McPherson J, Dipert A, Borges B (2022).", 
-                        tags$i("shiny: Web Application Framework for R"),
-                        ". R package version 1.7.3,", 
-                        a("https://CRAN.R-project.org/package=shiny",
-                          href = "https://CRAN.R-project.org/package=shiny"), ".")),
-              tags$li(p("Csardi G, Nepusz T: The igraph software package for complex network research,", 
-                        tags$i("InterJournal"),
-                        "Complex Systems 1695. 2006.", 
-                        a("https://igraph.org",
-                          href = "https://igraph.org"), ".")),
-              tags$li(p("Gohel D, Skintzos P (2022).", 
-                        tags$i("giraph: Make 'ggplot2' Graphics Interactive"),
-                        "R package version 0.8.5,", 
-                        a("https://CRAN.R-project.org/package=ggiraph",
-                          href = "https://CRAN.R-project.org/package=ggiraph"), ".")),
-              tags$li(p("Neth, H., Gaisbauer, F., Gradwohl, N., & Gaissmaier, W. (2022).", 
-                        tags$i("riskyr: Rendering Risk Literacy more Transparent"),
-                        ". Social Psychology and Decision Sciences, University of Konstanz, Germany. 
-                        Computer software (R package version 0.4.0, Aug. 15, 2022). Retrieved from", 
-                        a("https://CRAN.R-project.org/package=riskyr",
-                          href = "https://CRAN.R-project.org/package=riskyr"), ".")),
-              tags$li(p("Pedersen T. (2022).", 
-                        tags$i("An Implementation of Grammar of Graphics for Graphs and Networks"),
-                        "R package version 2.1.0. Available at:", 
-                        a("https://CRAN.R-project.org/package=ggraph",
-                          href = "https://CRAN.R-project.org/package=ggraph"), ".")),
-              tags$li(p("R Core Team (2022).", 
-                        tags$i("R: A language and environment for statistical computing"),
-                        ". R Foundation for Statistical Computing, Vienna, Austria. URL", 
-                        a("https://www.R-project.org/",
-                          href = "https://www.R-project.org/"), ".")),
-              tags$li(p("Sievert C.", 
-                        tags$i("Interactive Web-Based Data Visualization with R"),
-                        ", plotly, and shiny. Chapman and Hall/CRC Florida, 2020.", 
-                        a("https://plotly-r.com",
-                          href = "https://plotly-r.com"), ".")),
-              tags$li(p("Wickham H.", 
-                        tags$i("ggplot2: Elegant Graphics for Data Analysis"),
-                        ". Springer-Verlag New York, 2016.", 
-                        a("https://ggplot2.tidyverse.org",
-                          href = "https://ggplot2.tidyverse.org"), ".")),
-              tags$li(p("Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R,        
-                        Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL, Miller   
-                        E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V,
-                        Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019).
-                        'Welcome to the tidyverse.'", 
-                        tags$i("Journal of Open Source Software"),
-                        ", *4*(43), 1686. doi:10.21105/joss.01686,", 
-                        a("https://doi.org/10.21105/joss.01686",
-                          href = "https://doi.org/10.21105/joss.01686"), ".")),
-              tags$li(p("Xie Y, Cheng J, Tan X (2022).", 
-                        tags$i("DT: A Wrapper of the JavaScript Library 'DataTables'"),
-                        ". R package version 0.26,", 
-                        a("https://CRAN.R-project.org/package=DT",
-                          href = "https://CRAN.R-project.org/package=DT"), "."))
-            ),
-          width = 8
-          )
+      fluidRow(
+        column(
+          h3("Contact"),
+          p("You can find me and the source code on", 
+            a("Github", href = "https://github.com/ml-koch/Postttest-Probability-Shiny-App"), "."),
+          p("Feel free to contribute if you would like to or suggest changes that you would like to see."),
+          h3("References"),
+          p("This app is based on R and RShiny."),
+          p("The plots in the '2x2' section were created with the", tags$code("riskyr"), 
+            "package and their customization was reverse-enginered from how they appeared in the",
+            tags$code("riskyrApp"), "."),
+        #### Reference list -------------------------------------------------------------------
+          tags$ul(
+            tags$li(p("Attali D (2022).", 
+                      tags$i("colourpicker: A Colour Picker Tool for Shiny and for Selecting Colours in Plots"),
+                      "R package version 1.2.0,", 
+                      a("https://CRAN.R-project.org/package=colourpicker",
+                        href = "https://CRAN.R-project.org/package=colourpicker"), ".")),
+            tags$li(p("Bailey E (2022).", 
+                      tags$i("shinyBS: Twitter Bootstrap Components for Shiny"),
+                      "R package version 0.61.1,", 
+                      a("https://CRAN.R-project.org/package=shinyBS",
+                        href = "https://CRAN.R-project.org/package=shinyBS"), ".")),
+            tags$li(p("Chang W. (2021).", 
+                      tags$i("shinythemes: Themes for Shiny"),
+                      ". R package version 1.2.0,", 
+                      a("https://CRAN.R-project.org/package=shinythemes",
+                        href = "https://CRAN.R-project.org/package=shinythemes"), ".")),
+            tags$li(p("Chang W, Borges Ribeiro B (2021).", 
+                      tags$i("shinydashboard: Create Dashboards with 'Shiny'"),
+                      ". R package version 0.7.2, ", 
+                      a("https://CRAN.R-project.org/package=shinydashboard",
+                        href = "https://CRAN.R-project.org/package=shinydashboard"), ".")),
+            tags$li(p("Chang W, Cheng J, Allaire J, Sievert C, Schloerke B, Xie Y, Allen J,   
+                      McPherson J, Dipert A, Borges B (2022).", 
+                      tags$i("shiny: Web Application Framework for R"),
+                      ". R package version 1.7.3,", 
+                      a("https://CRAN.R-project.org/package=shiny",
+                        href = "https://CRAN.R-project.org/package=shiny"), ".")),
+            tags$li(p("Csardi G, Nepusz T: The igraph software package for complex network research,", 
+                      tags$i("InterJournal"),
+                      "Complex Systems 1695. 2006.", 
+                      a("https://igraph.org",
+                        href = "https://igraph.org"), ".")),
+            tags$li(p("Gohel D, Skintzos P (2022).", 
+                      tags$i("giraph: Make 'ggplot2' Graphics Interactive"),
+                      "R package version 0.8.5,", 
+                      a("https://CRAN.R-project.org/package=ggiraph",
+                        href = "https://CRAN.R-project.org/package=ggiraph"), ".")),
+            tags$li(p("Neth, H., Gaisbauer, F., Gradwohl, N., & Gaissmaier, W. (2022).", 
+                      tags$i("riskyr: Rendering Risk Literacy more Transparent"),
+                      ". Social Psychology and Decision Sciences, University of Konstanz, Germany. 
+                      Computer software (R package version 0.4.0, Aug. 15, 2022). Retrieved from", 
+                      a("https://CRAN.R-project.org/package=riskyr",
+                        href = "https://CRAN.R-project.org/package=riskyr"), ".")),
+            tags$li(p("Pedersen T. (2022).", 
+                      tags$i("An Implementation of Grammar of Graphics for Graphs and Networks"),
+                      "R package version 2.1.0. Available at:", 
+                      a("https://CRAN.R-project.org/package=ggraph",
+                        href = "https://CRAN.R-project.org/package=ggraph"), ".")),
+            tags$li(p("R Core Team (2022).", 
+                      tags$i("R: A language and environment for statistical computing"),
+                      ". R Foundation for Statistical Computing, Vienna, Austria. URL", 
+                      a("https://www.R-project.org/",
+                        href = "https://www.R-project.org/"), ".")),
+            tags$li(p("Sievert C.", 
+                      tags$i("Interactive Web-Based Data Visualization with R"),
+                      ", plotly, and shiny. Chapman and Hall/CRC Florida, 2020.", 
+                      a("https://plotly-r.com",
+                        href = "https://plotly-r.com"), ".")),
+            tags$li(p("Wickham H.", 
+                      tags$i("ggplot2: Elegant Graphics for Data Analysis"),
+                      ". Springer-Verlag New York, 2016.", 
+                      a("https://ggplot2.tidyverse.org",
+                        href = "https://ggplot2.tidyverse.org"), ".")),
+            tags$li(p("Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R,        
+                      Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL, Miller   
+                      E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V,
+                      Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019).
+                      'Welcome to the tidyverse.'", 
+                      tags$i("Journal of Open Source Software"),
+                      ", *4*(43), 1686. doi:10.21105/joss.01686,", 
+                      a("https://doi.org/10.21105/joss.01686",
+                        href = "https://doi.org/10.21105/joss.01686"), ".")),
+            tags$li(p("Xie Y, Cheng J, Tan X (2022).", 
+                      tags$i("DT: A Wrapper of the JavaScript Library 'DataTables'"),
+                      ". R package version 0.26,", 
+                      a("https://CRAN.R-project.org/package=DT",
+                        href = "https://CRAN.R-project.org/package=DT"), "."))
+          ),
+        width = 8
         )
       )
+    )
   )
 )
 
@@ -1115,11 +1182,13 @@ server <- function(input, output, session) {
     req(tree_data())
     tree_data_df_1 <- data.frame(tree_data()[1])
     tree_data_df_2 <- data.frame(tree_data()[2])
+    
     tree_data_df_2 <- tree_data_df_2 %>%
                            mutate(across(where(is.numeric), round, 4))
+    
     g <- graph_from_data_frame(tree_data_df_1, vertices = tree_data_df_2)
-    tree_plt <- ggraph(g, layout = "tree") +
-      geom_edge_link0(edge_width = 0.2, alpha = 0.5) +
+
+    ggraph(g, layout = "tree") +
       geom_point_interactive(size = 5, aes(x = x, y = y, 
                                            col = V(g)$Test_result,
                                            tooltip = paste("LR: ", V(g)$LR, "\n",
@@ -1129,27 +1198,56 @@ server <- function(input, output, session) {
                                                            "Spec : ", V(g)$Specificity))) + 
       geom_node_text(aes(label = V(g)$Posttest_probability), size = 6, check_overlap = FALSE, nudge_y = -0.12) +
       scale_colour_discrete(name = "Test result", labels = c("Negative", "Positive", "Prevalence")) +
-      theme(legend.text = element_text(size = rel(1.5)), legend.title = element_text(size = rel(1.5))) 
-      if (input$tree_ribs) {
-        tree_plt +
-        geom_rect(data = ribbon_data(), aes(xmin = -Inf, xmax = Inf, ymin = mins, 
-                                          ymax = maxs, 
-                                          fill = rib_names), alpha = 0.3) + 
-        scale_fill_brewer_interactive(name = "Test number", palette = input$tree_rib_col)
-      }
-      else {tree_plt}
-      # EXAPND WTIH BACKGROUND ADN GRID CUSTOMIZATION, MAYBE ALSO FOR ROC
+      theme(legend.text = element_text(size = rel(1.5)), legend.title = element_text(size = rel(1.5)))
   })
 
-  # output tree plot
-  output$tree_plot_out <- renderGirafe({
+  # Customizes tree plot according to user input and needed to add geom_edge_link!
+  tree_plot_custom <- reactive({
     req(tree_plot())
-    girafe(ggobj = tree_plot(), width_svg = 12, height_svg = 8)
+    tree_plot <- tree_plot()
+    if (input$tree_custom_edge) {
+      tree_plot <- tree_plot +
+                    geom_edge_link0(edge_width = 0.3, alpha = 0.5, colour = input$tree_edge_col)
+    }
+    else {
+      tree_plot <- tree_plot +
+                    geom_edge_link0(edge_width = 0.3, alpha = 0.5)
+    }
+    if (input$tree_ribs) {
+      tree_plot <- tree_plot +
+                    geom_rect(data = ribbon_data(), aes(xmin = -Inf, xmax = Inf, ymin = mins, 
+                                                        ymax = maxs, 
+                                                        fill = rib_names), alpha = 0.3) + 
+                    scale_fill_brewer_interactive(name = "Test number", palette = input$tree_rib_col)
+      }
+    if (input$tree_theme) {
+      tree_plot <- tree_plot +
+                    eval(parse(text = input$tree_custom_theme)) +
+                    theme(legend.text = element_text(size = rel(1.5)), legend.title = element_text(size = rel(1.5)))             
+    }
+    if (input$tree_major_grid) {
+      tree_plot <- tree_plot +
+                    theme(panel.grid.major = element_line(color = input$tree_grid_maj_col,
+                                                          size = 0.5))
+    }
+    if (input$tree_minor_grid) {
+      tree_plot <- tree_plot +
+                    theme(panel.grid.minor = element_line(color = input$tree_grid_min_col,
+                                                          size = 0.5))
+    }
+    if (input$tree_background) {
+      tree_plot <- tree_plot +
+                    theme(panel.background = element_rect(fill = input$tree_background_col,
+                                              colour = input$tree_background_col,
+                                              size = 0.5, linetype = "solid"))
+    }
+    tree_plot
   })
-  ### Debugging ------------------------------------------------
-  # observer for debugging REMOVE BEFORE FINAL
-  output$track <- renderText({
-    paste("index", rv$counter, "Button", btn$counter)
+
+  # output tree plot in girafe interactive format (ggiraph)
+  output$tree_plot_out <- renderGirafe({
+    req(tree_plot_custom())
+    girafe(ggobj = tree_plot_custom(), width_svg = 12, height_svg = 8)
   })
 
 ## 2x2 -------------------------------------------------------
