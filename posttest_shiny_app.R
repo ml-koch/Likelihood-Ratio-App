@@ -15,59 +15,20 @@ library(shinyBS)
 library(ggraph)
 library(igraph)
 library(ggiraph)
+library(jtools)
+library(bslib)
 
 
 # Global options ----------------------------------------------
 options(shiny.reactlog = TRUE)
-#thematic_shiny()
 
 # function source ---------------------------------------------
 source("multiple_post_probs.R")
 
 # Global functions --------------------------------------------
-# define function to create dynamic input names for tabs
-# with consistent naming sheme name_id
-shinyInput <- function(name, id) paste(name, id, sep = "_")
-
-### Themeselector as input -------------------------------
-
-themeSelector2 <- function() {
-  div(
-    div(
-      selectInput("shinytheme-selector", "Choose a theme",
-        c("default", shinythemes:::allThemes()),
-        selectize = FALSE
-      )
-    ),
-    tags$script(
-      "$('#shinytheme-selector')
-        .on('change', function(el) {
-        var allThemes = $(this).find('option').map(function() {
-        if ($(this).val() === 'default')
-        return 'bootstrap';
-        else
-        return $(this).val();
-        });
-        // Find the current theme
-        var curTheme = el.target.value;
-        if (curTheme === 'default') {
-        curTheme = 'bootstrap';
-        curThemePath = 'shared/bootstrap/css/bootstrap.min.css';
-        } else {
-        curThemePath = 'shinythemes/css/' + curTheme + '.min.css';
-        }
-        // Find the <link> element with that has the bootstrap.css
-        var $link = $('link').filter(function() {
-        var theme = $(this).attr('href');
-        theme = theme.replace(/^.*\\//, '').replace(/(\\.min)?\\.css$/, '');
-        return $.inArray(theme, allThemes) !== -1;
-        });
-        // Set it to the correct path
-        $link.attr('href', curThemePath);
-        });"
-    )
-  )
-}
+  # define function to create dynamic input names for tabs
+  # with consistent naming sheme name_id
+  shinyInput <- function(name, id) paste(name, id, sep = "_")
 
 ### Data Table NA display options ----------------------------
 rowCallback <- c(
@@ -84,12 +45,13 @@ rowCallback <- c(
 
 # Ui ---------------------------------------------------------
 ui <- fluidPage(
-  theme = shinytheme("yeti"),
+  theme = bs_theme(bootswatch = "minty"),
   withMathJax(),
   navbarPage("PTP/PPV",
   ## PPC tab ----------------------------------------------------
     tabPanel("PTP",
       sidebarLayout(
+        ### Sidebar Panel UI ------------------------------------------------------------------
         sidebarPanel(
           tabsetPanel(
             id = "tabs",
@@ -156,15 +118,16 @@ ui <- fluidPage(
               actionButton("calc", "Calculate posttest probability",
                 icon = icon("calculator")
               ),
-              # themeSelector2(),
+              themeSelector2(),
             )
           )
         ),
-
+        ### Main Panel UI -----------------------------------------------------------------------------------
         # Main Panel for Output
         mainPanel(
           tabsetPanel(
             id = "output_tabs",
+            ### Text Output UI --------------------------------------------------------------------------
             tabPanel(
               title = "Text", 
               br(),
@@ -176,6 +139,7 @@ ui <- fluidPage(
               p("All probabilities are calculated using", 
                 a("likelihood ratios", href = "https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing")),
             ),
+            ### Datatable Output and Download UI ------------------------------------------------------------
             tabPanel(
               title = "Table",
               br(),
@@ -203,14 +167,113 @@ ui <- fluidPage(
               br(),
               downloadButton("download_tree_data", "Download Tree data")
             ),
+            ### ROC plot Output and customization UI --------------------------------------------------------------
             tabPanel(
               title = "ROC Plot",
               br(),
               plotlyOutput(outputId = "roc_plot"),
               br(),
-              br(),
-              p("This interactive plot includes a download function in the upper right corner")
+              wellPanel(
+                fluidRow(
+                  column(
+                    br(),
+                    checkboxInput(inputId = "roc_leg",
+                                  label = "Include legend",
+                                  value = TRUE),
+                    width = 4),
+                  column(
+                    selectInput(inputId = "roc_palette",
+                                label = "Legend color",
+                                choices = c("Set1", "Set2", "Set3", "Pastel1",
+                                            "Pastel2", "Dark2", "Accent"),
+                                selected = "Set3"),
+                  width = 4)),
+                fluidRow(
+                  column(
+                    br(),
+                    checkboxInput(inputId = "roc_diag",
+                                  label = "Include bisector"),
+                    width = 4),
+                  column(
+                    colourInput("roc_diag_col",
+                          showColour = "background",
+                          label = "Bisector color",
+                          value = "grey"),
+                  width = 4),
+                  column(
+                    numericInput(inputId = "roc_diag_alpha",
+                                  label = "Bisector opacity",
+                                  min = 0,
+                                  max = 1,
+                                  step = 0.05,
+                                  value = 0.5),
+                  width = 4)),
+                fluidRow(
+                  column(
+                    br(),
+                    checkboxInput(inputId = "roc_major_grid",
+                              label = "Include major grid"),
+                    width = 4),
+                  column(
+                    colourInput("roc_grid_maj_col",
+                          showColour = "background",
+                          label = "Major grid color",
+                          value = "grey"),
+                  width = 4),
+                  column(
+                    numericInput(inputId = "roc_grid_major_alpha",
+                                  label = "Major grid opacity",
+                                  min = 0,
+                                  max = 1,
+                                  step = 0.05,
+                                  value = 0.5),
+                  width = 4)),
+                fluidRow(
+                  column(
+                    br(),
+                    checkboxInput(inputId = "roc_background",
+                              label = "Custom background color"),
+                    width = 4),
+                  column(
+                   colourInput("roc_background_col",
+                          showColour = "background",
+                          label = "Background color",
+                          value = "grey"),
+                  width = 4),
+                  column(
+                    numericInput(inputId = "roc_background_alpha",
+                                  label = "Background opacity",
+                                  min = 0,
+                                  max = 1,
+                                  step = 0.05,
+                                  value = 0.5),
+                  width = 4)),
+                fluidRow(
+                  column(
+                    br(),
+                    checkboxInput(inputId = "roc_theme",
+                              label = "Custom theme"),
+                    width = 4),
+                  column(
+                   selectInput(inputId = "roc_custom_theme",
+                                label = "Select theme",
+                                choices = c("Graph" = "theme_graph()",
+                                            "BW" = "theme_bw()",
+                                            "APA" = "theme_apa()", 
+                                            "Light" = "theme_light()", 
+                                            "Linedraw" = "theme_linedraw()", 
+                                            "Minimal" = "theme_minimal()",
+                                            "Classic" = "theme_classic()", 
+                                            "Void" = "theme_void()", 
+                                            "Dark" = "theme_dark()"),
+                                selected = "Graph"),
+                  width = 4)),
+                fluidRow(column(
+                          p("This interactive plot includes a download function in the upper right corner"),
+                          width = 12))
+              )
             ),
+            ### Tree plot Output and customization UI ------------------------------------------------------
             tabPanel(
               title = "Tree Plot",
               br(),
@@ -225,10 +288,18 @@ ui <- fluidPage(
                     width = 4),
                   column(
                     selectInput(inputId = "tree_rib_col",
-                                label = "Select ribbon color",
+                                label = "Ribbon color",
                                 choices = c("Set1", "Set2", "Set3", "Pastel1",
                                             "Pastel2", "Dark2", "Accent"),
                                 selected = "Set3"),
+                  width = 4),
+                  column(
+                    numericInput(inputId = "tree_rib_alpha",
+                                  label = "Ribbon opacity",
+                                  min = 0,
+                                  max = 1,
+                                  step = 0.05,
+                                  value = 0.5),
                   width = 4)),
                 fluidRow(
                   column(
@@ -241,6 +312,14 @@ ui <- fluidPage(
                           showColour = "background",
                           label = "Edge color",
                           value = "grey"),
+                  width = 4),
+                  column(
+                    numericInput(inputId = "tree_edge_alpha",
+                                  label = "Edge opacity",
+                                  min = 0,
+                                  max = 1,
+                                  step = 0.05,
+                                  value = 0.5),
                   width = 4)),
                 fluidRow(
                   column(
@@ -253,6 +332,14 @@ ui <- fluidPage(
                           showColour = "background",
                           label = "Major grid color",
                           value = "grey"),
+                  width = 4),
+                  column(
+                    numericInput(inputId = "tree_grid_major_alpha",
+                                  label = "Major grid opacity",
+                                  min = 0,
+                                  max = 1,
+                                  step = 0.05,
+                                  value = 0.5),
                   width = 4)),
                 fluidRow(
                   column(
@@ -265,6 +352,14 @@ ui <- fluidPage(
                           showColour = "background",
                           label = "Minor grid color",
                           value = "grey"),
+                  width = 4),
+                  column(
+                    numericInput(inputId = "tree_grid_minor_alpha",
+                                  label = "Minor grid opacity",
+                                  min = 0,
+                                  max = 1,
+                                  step = 0.05,
+                                  value = 0.5),
                   width = 4)),
                 fluidRow(
                   column(
@@ -277,6 +372,14 @@ ui <- fluidPage(
                           showColour = "background",
                           label = "Background color",
                           value = "grey"),
+                  width = 4),
+                  column(
+                    numericInput(inputId = "tree_background_alpha",
+                                  label = "Background opacity",
+                                  min = 0,
+                                  max = 1,
+                                  step = 0.05,
+                                  value = 0.5),
                   width = 4)),
                 fluidRow(
                   column(
@@ -288,7 +391,8 @@ ui <- fluidPage(
                    selectInput(inputId = "tree_custom_theme",
                                 label = "Select theme",
                                 choices = c("Graph" = "theme_graph()",
-                                            "BW" = "theme_bw()", 
+                                            "BW" = "theme_bw()",
+                                            "APA" = "theme_apa()", 
                                             "Light" = "theme_light()", 
                                             "Linedraw" = "theme_linedraw()", 
                                             "Minimal" = "theme_minimal()",
@@ -297,9 +401,10 @@ ui <- fluidPage(
                                             "Dark" = "theme_dark()"),
                                 selected = "Graph"),
                   width = 4)),
-                fluidRow(p("This interactive plot includes a download function in the upper right corner"))
-                ),
-              br()
+                fluidRow(column(
+                          p("This interactive plot includes a download function in the upper right corner"),
+                          width = 12))
+              )
             )
           )
         )
@@ -855,6 +960,11 @@ ui <- fluidPage(
                       "R package version 0.8.5,", 
                       a("https://CRAN.R-project.org/package=ggiraph",
                         href = "https://CRAN.R-project.org/package=ggiraph"), ".")),
+             tags$li(p("Long JA (2022).", 
+                      tags$i("jtools: Analysis and Presentation of Social Scientific Data"),
+                      "R package version 2.2.0,", 
+                      a("https://cran.r-project.org/package=jtools",
+                        href = "https://cran.r-project.org/package=jtools"), ".")),
             tags$li(p("Neth, H., Gaisbauer, F., Gradwohl, N., & Gaissmaier, W. (2022).", 
                       tags$i("riskyr: Rendering Risk Literacy more Transparent"),
                       ". Social Psychology and Decision Sciences, University of Konstanz, Germany. 
@@ -1134,31 +1244,69 @@ server <- function(input, output, session) {
     }
   )
 
-  # Create ROC plot 
+  # Create basic ROC plot 
   plot1 <- eventReactive(input$calc, {
-    plot1 <- ggplot(test_data(), 
-                    aes(x = 1 - Specificity,
-                    y = Sensitivity,
-                    color = test_data()[, 1],
-                    label = LR,
-                    schmabel = Result)) +
-             geom_point() +
-             xlim(0, 1) +
-             ylim(0, 1) +
-             labs(title = "ROC plot", color = "Test \n") + 
-             scale_color_brewer(palette = "Set1") +
-             geom_abline(slope = 1, intercept = 0, 
-                         colour = "gray75")
+    ggplot(test_data(), 
+            aes(x = 1 - Specificity,
+            y = Sensitivity,
+            color = test_data()[, 1],
+            label = LR,
+            schmabel = Result)) +
+          geom_point() +
+          coord_cartesian(xlim = c(0, 1),
+                          ylim = c(0, 1))
+  })
+
+  # Customize the ROC plot according to User input
+  roc_plot_custom <- reactive({
+    req(plot1())
+    roc_plot <- plot1()
+    if (input$roc_leg) {
+      roc_plot <- roc_plot +
+                    labs(title = "ROC plot", color = "Test \n") + 
+                    scale_color_brewer(palette = input$roc_palette)
+    }
+    else {
+      roc_plot <- roc_plot + 
+                    labs(title = "ROC plot") +
+                    theme(legend.position = "none") + 
+                    scale_color_brewer(palette = input$roc_palette)
+    }
+    if (input$roc_theme) {
+      roc_plot <- roc_plot +
+                    eval(parse(text = input$roc_custom_theme)) 
+    }
+    if (input$roc_major_grid) {
+      roc_plot <- roc_plot +
+                    theme(panel.grid.major = element_line(color = alpha(input$roc_grid_maj_col,
+                                                                        input$roc_grid_major_alpha),
+                                                          size = 0.5))
+    }
+    if (input$roc_background) {
+      roc_plot <- roc_plot +
+                    theme(panel.background = element_rect(fill = alpha(input$roc_background_col,
+                                                                       input$roc_background_alpha),
+                                              colour = alpha(input$roc_background_col,
+                                                             input$roc_background_alpha),
+                                              size = 0.5, linetype = "solid"))
+    }
+    if (input$roc_diag) {
+      roc_plot <- roc_plot +
+                    geom_abline(slope = 1, intercept = 0, 
+                                colour = input$roc_diag_col,
+                                alpha = input$roc_diag_alpha)
+    }
+    roc_plot
   })
 
   output$roc_plot <- renderPlotly({
+    req(roc_plot_custom())
     ggplotly(
-      p = plot1(),
-      tooltip = c("x", "y", "label", "schmabel")
-    )
+      p = roc_plot_custom(),
+      tooltip = c("x", "y", "label", "schmabel"))
   })
 
-  # dynamic background ribbons
+  # Creates the start and end point of the colored ribbons for the tree plot based on number of tests
   ribbon_data <- eventReactive(input$calc, {
     tree_data_df <- data.frame(tree_data()[2])
 
@@ -1177,7 +1325,7 @@ server <- function(input, output, session) {
     x
   })
 
-  #create Tree plot
+  # create Tree plot
   tree_plot <- eventReactive(input$calc, {
     req(tree_data())
     tree_data_df_1 <- data.frame(tree_data()[1])
@@ -1201,13 +1349,13 @@ server <- function(input, output, session) {
       theme(legend.text = element_text(size = rel(1.5)), legend.title = element_text(size = rel(1.5)))
   })
 
-  # Customizes tree plot according to user input and needed to add geom_edge_link!
+  # Customizes tree plot according to user input and adds geom_edge_link which is needed to draw edges
   tree_plot_custom <- reactive({
     req(tree_plot())
     tree_plot <- tree_plot()
     if (input$tree_custom_edge) {
       tree_plot <- tree_plot +
-                    geom_edge_link0(edge_width = 0.3, alpha = 0.5, colour = input$tree_edge_col)
+                    geom_edge_link0(edge_width = 0.3, alpha = input$tree_edge_alpha, colour = input$tree_edge_col)
     }
     else {
       tree_plot <- tree_plot +
@@ -1217,28 +1365,32 @@ server <- function(input, output, session) {
       tree_plot <- tree_plot +
                     geom_rect(data = ribbon_data(), aes(xmin = -Inf, xmax = Inf, ymin = mins, 
                                                         ymax = maxs, 
-                                                        fill = rib_names), alpha = 0.3) + 
+                                                        fill = rib_names), alpha = input$tree_rib_alpha) + 
                     scale_fill_brewer_interactive(name = "Test number", palette = input$tree_rib_col)
       }
     if (input$tree_theme) {
       tree_plot <- tree_plot +
                     eval(parse(text = input$tree_custom_theme)) +
-                    theme(legend.text = element_text(size = rel(1.5)), legend.title = element_text(size = rel(1.5)))             
+                    theme(legend.text = element_text(size = rel(1.5)), legend.title = element_text(size = rel(1.5)))
     }
     if (input$tree_major_grid) {
       tree_plot <- tree_plot +
-                    theme(panel.grid.major = element_line(color = input$tree_grid_maj_col,
+                    theme(panel.grid.major = element_line(color = alpha(input$tree_grid_maj_col,
+                                                                       input$tree_grid_major_alpha),
                                                           size = 0.5))
     }
     if (input$tree_minor_grid) {
       tree_plot <- tree_plot +
-                    theme(panel.grid.minor = element_line(color = input$tree_grid_min_col,
+                    theme(panel.grid.minor = element_line(color = alpha(input$tree_grid_min_col,
+                                                                        input$tree_grid_minor_alpha),
                                                           size = 0.5))
     }
     if (input$tree_background) {
       tree_plot <- tree_plot +
-                    theme(panel.background = element_rect(fill = input$tree_background_col,
-                                              colour = input$tree_background_col,
+                    theme(panel.background = element_rect(fill = alpha(input$tree_background_col,
+                                                                       input$tree_background_alpha),
+                                              colour = alpha(input$tree_background_col,
+                                                             input$tree_background_alpha),
                                               size = 0.5, linetype = "solid"))
     }
     tree_plot
