@@ -117,8 +117,7 @@ ui <- fluidPage(
               br(),
               actionButton("calc", "Calculate posttest probability",
                 icon = icon("calculator")
-              ),
-              themeSelector2(),
+              )
             )
           )
         ),
@@ -145,27 +144,37 @@ ui <- fluidPage(
               br(),
               dataTableOutput("test"),
               br(),
-              radioButtons(
-                inputId = "filetype",
-                label = "Select filetype:",
-                choices = c("csv", "tsv"),
-                selected = "csv"
+              br(),
+              fluidRow(
+                column(
+                  radioButtons(
+                    inputId = "filetype",
+                    label = "Select filetype:",
+                    choices = c("csv", "tsv"),
+                    selected = "csv"),
+                  width = 3),
+                br(),
+                column(
+                  br(),
+                  downloadButton("download_data", "Download data"), width = 6)
               ),
-              br(),
-              downloadButton("download_data", "Download data"),
-              br(),
               br(),
               br(),
               dataTableOutput("tree_data"),
               br(),
-              radioButtons(
-                inputId = "filetype_tree",
-                label = "Select filetype:",
-                choices = c("csv", "tsv"),
-                selected = "csv"
-              ),
-              br(),
-              downloadButton("download_tree_data", "Download Tree data")
+              fluidRow(
+                column(
+                  radioButtons(
+                    inputId = "filetype_tree",
+                    label = "Select filetype:",
+                    choices = c("csv", "tsv"),
+                    selected = "csv"),
+                  width = 3),
+                br(),
+                column(
+                  br(),
+                  downloadButton("download_tree_data", "Download Tree data"), width = 6)
+              )
             ),
             ### ROC plot Output and customization UI --------------------------------------------------------------
             tabPanel(
