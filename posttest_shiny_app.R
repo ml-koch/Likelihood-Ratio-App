@@ -45,7 +45,7 @@ rowCallback <- c(
 
 # Ui ---------------------------------------------------------
 ui <- fluidPage(
-  theme = bs_theme(bootswatch = "minty"),
+  theme = bs_theme(bootswatch = "yeti"),
   withMathJax(),
   navbarPage("PTP/PPV",
   ## PPC tab ----------------------------------------------------
