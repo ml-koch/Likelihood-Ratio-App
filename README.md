@@ -14,12 +14,13 @@ Includes:
 - downloadable plots
 - references
 - color and label customization for riskyr plots
+- interactive customizable ggraph tree plot
 
 To Do:
 - General 
     - tests with multiple possible outcomes
     - add xslx download format
-    - add hover/click explanation labels
+    - add hover/click explanation labels to more fields
     - add highcharter?
     - split project into single modules in different files?
         - create functions for repetitive tasks
@@ -27,5 +28,5 @@ To Do:
     - rename panels and app and also prevalance?
     - clean up code with indents and bracket placing
     - rewrite functions with pipes
-    - make tree diagram interactive
-    - customize tree diagram with nice colors
+    - customize tree diagram with background, gridlines, layout options
+    - add similar customization to ROC plot

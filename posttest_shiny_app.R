@@ -14,6 +14,7 @@ library(colourpicker)
 library(shinyBS)
 library(ggraph)
 library(igraph)
+library(ggiraph)
 
 
 # Global options ----------------------------------------------
@@ -213,10 +214,24 @@ ui <- fluidPage(
             tabPanel(
               title = "Tree Plot",
               br(),
-              plotOutput(outputId = "tree_plot_out"),
+              girafeOutput(outputId = "tree_plot_out"),
               br(),
-              br(),
-              p("This interactive plot includes a download function in the upper right corner")
+              wellPanel(
+                fluidRow(
+                  column(
+                    checkboxInput(inputId = "tree_ribs",
+                              label = "Include ribbons"),
+                    width = 4),
+                  column(
+                    selectInput(inputId = "tree_rib_col",
+                                label = "Select ribbon color",
+                                choices = c("Set1", "Set2", "Set3", "Pastel1",
+                                            "Pastel2", "Dark2", "Accent"),
+                                selected = "Set3"),
+                    width = 4)),
+                fluidRow(p("This interactive plot includes a download function in the upper right corner"))
+                ),
+              br()
             )
           )
         )
@@ -737,6 +752,16 @@ ui <- fluidPage(
               tags$code("riskyrApp"), "."),
           #### Reference list -------------------------------------------------------------------
             tags$ul(
+              tags$li(p("Attali D (2022).", 
+                        tags$i("colourpicker: A Colour Picker Tool for Shiny and for Selecting Colours in Plots"),
+                        "R package version 1.2.0,", 
+                        a("https://CRAN.R-project.org/package=colourpicker",
+                          href = "https://CRAN.R-project.org/package=colourpicker"), ".")),
+              tags$li(p("Bailey E (2022).", 
+                        tags$i("shinyBS: Twitter Bootstrap Components for Shiny"),
+                        "R package version 0.61.1,", 
+                        a("https://CRAN.R-project.org/package=shinyBS",
+                          href = "https://CRAN.R-project.org/package=shinyBS"), ".")),
               tags$li(p("Chang W. (2021).", 
                         tags$i("shinythemes: Themes for Shiny"),
                         ". R package version 1.2.0,", 
@@ -753,12 +778,27 @@ ui <- fluidPage(
                         ". R package version 1.7.3,", 
                         a("https://CRAN.R-project.org/package=shiny",
                           href = "https://CRAN.R-project.org/package=shiny"), ".")),
+              tags$li(p("Csardi G, Nepusz T: The igraph software package for complex network research,", 
+                        tags$i("InterJournal"),
+                        "Complex Systems 1695. 2006.", 
+                        a("https://igraph.org",
+                          href = "https://igraph.org"), ".")),
+              tags$li(p("Gohel D, Skintzos P (2022).", 
+                        tags$i("giraph: Make 'ggplot2' Graphics Interactive"),
+                        "R package version 0.8.5,", 
+                        a("https://CRAN.R-project.org/package=ggiraph",
+                          href = "https://CRAN.R-project.org/package=ggiraph"), ".")),
               tags$li(p("Neth, H., Gaisbauer, F., Gradwohl, N., & Gaissmaier, W. (2022).", 
                         tags$i("riskyr: Rendering Risk Literacy more Transparent"),
                         ". Social Psychology and Decision Sciences, University of Konstanz, Germany. 
                         Computer software (R package version 0.4.0, Aug. 15, 2022). Retrieved from", 
                         a("https://CRAN.R-project.org/package=riskyr",
                           href = "https://CRAN.R-project.org/package=riskyr"), ".")),
+              tags$li(p("Pedersen T. (2022).", 
+                        tags$i("An Implementation of Grammar of Graphics for Graphs and Networks"),
+                        "R package version 2.1.0. Available at:", 
+                        a("https://CRAN.R-project.org/package=ggraph",
+                          href = "https://CRAN.R-project.org/package=ggraph"), ".")),
               tags$li(p("R Core Team (2022).", 
                         tags$i("R: A language and environment for statistical computing"),
                         ". R Foundation for Statistical Computing, Vienna, Austria. URL", 
@@ -1051,26 +1091,60 @@ server <- function(input, output, session) {
     )
   })
 
+  # dynamic background ribbons
+  ribbon_data <- eventReactive(input$calc, {
+    tree_data_df <- data.frame(tree_data()[2])
+
+    ymins <- c(0)
+    ymins <- append(ymins, seq_along(unique(tree_data_df$Test_name)))
+    ymins <- ymins[-length(ymins)]
+    ymaxs <- ymins
+    ymins <- ymins - 0.1
+    ymaxs <- ymaxs + 0.1
+
+    rib_names <- unique(tree_data_df$Test_name)
+    rib_names[which(is.na(rib_names))] <- "Prevalence"
+
+    x <- data.frame(ymins, ymaxs, rev(rib_names))
+    colnames(x) <- c("mins", "maxs", "rib_names")
+    x
+  })
+
   #create Tree plot
   tree_plot <- eventReactive(input$calc, {
     req(tree_data())
     tree_data_df_1 <- data.frame(tree_data()[1])
     tree_data_df_2 <- data.frame(tree_data()[2])
-    g <- graph_from_data_frame(tree_data_df_1, vertices = tree_data_df_2) 
-    ggraph(g) +
-      geom_edge_link0(edge_width = 0.1, alpha = 0.2) +
-      geom_node_point(aes(col = tree_data_df_2$Test_result)) +
-      geom_node_text(aes(label = tree_data_df_2$Posttest_probability), size = 5, check_overlap = FALSE, nudge_y = -0.1)
+    tree_data_df_2 <- tree_data_df_2 %>%
+                           mutate(across(where(is.numeric), round, 4))
+    g <- graph_from_data_frame(tree_data_df_1, vertices = tree_data_df_2)
+    tree_plt <- ggraph(g, layout = "tree") +
+      geom_edge_link0(edge_width = 0.2, alpha = 0.5) +
+      geom_point_interactive(size = 5, aes(x = x, y = y, 
+                                           col = V(g)$Test_result,
+                                           tooltip = paste("LR: ", V(g)$LR, "\n",
+                                                           "Posttest : ", V(g)$Posttest_probability, "\n",
+                                                           "Test : ", V(g)$Test_name, "\n",
+                                                           "Sens : ", V(g)$Sensitivity, "\n",
+                                                           "Spec : ", V(g)$Specificity))) + 
+      geom_node_text(aes(label = V(g)$Posttest_probability), size = 6, check_overlap = FALSE, nudge_y = -0.12) +
+      scale_colour_discrete(name = "Test result", labels = c("Negative", "Positive", "Prevalence")) +
+      theme(legend.text = element_text(size = rel(1.5)), legend.title = element_text(size = rel(1.5))) 
+      if (input$tree_ribs) {
+        tree_plt +
+        geom_rect(data = ribbon_data(), aes(xmin = -Inf, xmax = Inf, ymin = mins, 
+                                          ymax = maxs, 
+                                          fill = rib_names), alpha = 0.3) + 
+        scale_fill_brewer_interactive(name = "Test number", palette = input$tree_rib_col)
+      }
+      else {tree_plt}
+      # EXAPND WTIH BACKGROUND ADN GRID CUSTOMIZATION, MAYBE ALSO FOR ROC
   })
 
   # output tree plot
-  output$tree_plot_out <- renderPlot({
-    req(input$create_tree)
-    tree_plot()
-    # ggplotly(
-    #   p = tree_plot(),
-    #   tooltip = c("x", "y", "label", "colour")
-    # )
+  output$tree_plot_out <- renderGirafe({
+    req(tree_plot())
+    girafe(ggobj = tree_plot(), width_svg = 12, height_svg = 8)
   })
   ### Debugging ------------------------------------------------
   # observer for debugging REMOVE BEFORE FINAL

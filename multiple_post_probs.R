@@ -266,7 +266,7 @@ multiple_post_prob_tree <- function(sens, spec, br, test_res) {
       }
     }
   }
-  colnames(vertices) <- c("Test_path", "Test_name", "Sensitivitiy",
+  colnames(vertices) <- c("Test_path", "Test_name", "Sensitivity",
                           "Specificity", "LR", "Pretest_probability",
                           "Posttest_probability", "Test_result", 
                           "Posttest_odds", "Parent_path")
