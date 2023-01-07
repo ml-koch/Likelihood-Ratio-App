@@ -27,4 +27,8 @@ To Do:
     - clean up code with indents and bracket placing
     - rewrite functions with pipes
     - add sensitivity, specificity and prevalence as possible inputs for "2x2" tab
-    - add explanatory tab explaining the use of likelihood ratios and posttetst probability/positive predictive value
+    - add explanatory tab explaining the use of likelihood ratios and posttetst probability/positive predictive validity
+    
+    
+    
+  The "multiple_post_probs_nonshiny.R" file includes functions to calculate posttets probabiltiy/positive predictiva validity 
