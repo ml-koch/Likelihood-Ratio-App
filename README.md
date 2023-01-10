@@ -33,7 +33,7 @@ Planned:
 - text output of likelihood ratios and examples as for how to interpret them correctly 
 - support for tests with 3+ potential results (or alternatively explanation how to convert them into binary tests as in the end often disease vs no disease is the question)
 
- ### Confusion matrix page
+ ### 2x2 page
 The app uses a 2x2 input of all values inside a [confusion matrix](https://en.wikipedia.org/wiki/Confusion_matrix).
 
 It then calculates sensitivity and specificity of a test underlying the confusion matrix and displays various [riskyr plots](https://cran.r-project.org/web/packages/riskyr/index.html) which are customizable in name and color.
