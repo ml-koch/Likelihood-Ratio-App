@@ -1,5 +1,5 @@
 # Working directory -------------------------------------------
-setwd("C:/Users/Maximilian/Documents/Repositories/Postttest-Probability-Shiny-App")
+#setwd("")
 
 # Packages ----------------------------------------------------
 library(shiny)
@@ -23,7 +23,7 @@ library(bslib)
 options(shiny.reactlog = TRUE)
 
 # function source ---------------------------------------------
-source("multiple_post_probs.R")
+source("lr_functions.R")
 
 # Global functions --------------------------------------------
   # define function to create dynamic input names for tabs
