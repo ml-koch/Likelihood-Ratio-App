@@ -1,5 +1,5 @@
 # Working directory -------------------------------------------
-setwd("C:/Users/Maximilian/Documents/Repositories/Postttest-Probability-Shiny-App")
+#setwd("C:/Users/Maximilian/Documents/Repositories/Postttest-Probability-Shiny-App")
 
 # Packages ----------------------------------------------------
 library(shiny)
