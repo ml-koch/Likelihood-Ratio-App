@@ -304,3 +304,19 @@ create_detail_text <- function(data) {
   }
   return(out)
 }
+
+# create dynamic text UI for lr text formulation
+create_lr_text <- function(data) {
+  n <- nrow(data)
+  out <- c()
+
+  for (i in 1:n) {
+    string_pos <- paste("The likelihood of a positive condition after a positive result on", data[i, 1],
+                    "is", round(data[i, 5], 2), "times as much as the same result under a negative condition.")
+    string_neg <- paste("The likelihood of a positive condition after a negative result on", data[i, 1],
+                    "is", round(data[i, 5], 2), "times as much as the same result under a negative condition.")
+    out <- append(out, paste0(string_pos, sep = "\n"))
+    out <- append(out, paste0(string_neg, sep = "\n"))
+  }
+  return(out)
+}

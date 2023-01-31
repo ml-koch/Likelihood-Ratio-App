@@ -130,9 +130,15 @@ ui <- fluidPage(
             tabPanel(
               title = "Text", 
               br(),
+              uiOutput("post_prob_text"),
+              br(),
+              uiOutput("ptp_info_text"),
+              br(),
               verbatimTextOutput("detail_text_out"),
               br(),
-              uiOutput("post_prob_text"),
+              uiOutput("lr_info_text"),
+              br(),
+              verbatimTextOutput("lr_text_out"),
               br(),
               br(),
               p("All probabilities are calculated using", 
@@ -1190,7 +1196,7 @@ server <- function(input, output, session) {
   ### Outputs --------------------------------------------------
   # Create text output 
   output$detail_text_out <- renderPrint({
-    if (input$method != "fast" && nrow(test_data()) >= 2) {
+    if (input$method == "detail" && nrow(test_data()) >= 2) {
         detail_text <- create_detail_text(test_data())
         cat(paste0(detail_text), sep = "")}
   }) %>%
@@ -1198,14 +1204,46 @@ server <- function(input, output, session) {
 
   output$post_prob_text <- renderUI({
     req(test_data())
-      withMathJax(paste0("The posttest probability after all tests is: ",
-                        "\\(\\frac{\\text { sensitivity } \\times \\text { base rate }}
-                        {\\text { sensitivity } \\times \\text { base rate } +
-                        (1-\\text { specificity }) \\times(1-\\text { base rate })} = ",
-                        round(test_data()[nrow(test_data()), 7], 4), "\\)"))
+    withMathJax(paste0("The posttest probability after all tests is: ",
+                      "\\(\\frac{\\text { sensitivity } \\times \\text { base rate }}
+                      {\\text { sensitivity } \\times \\text { base rate } +
+                      (1-\\text { specificity }) \\times(1-\\text { base rate })} = ",
+                      round(test_data()[nrow(test_data()), 7], 4), "\\)"))
+  })
+  # logcally correct way of formulating results diagnostically
+  output$ptp_info_text <- renderUI({
+    req(test_data())
+    withMathJax(paste0("The logically correct way of formulating results reflects the information 
+                        that the posterior probability contains.
+                        It is created with likelihood ratios in the diagnostic sense (positive and negative LR) that indicate a change in probability from the 
+                        pre-test level given some evidence (here test result), to the post-test level.
+                        Probability conclusions are limited to situations where pre-test probabilities (prevelence; base rate)
+                        are known. The posttest probability here indicates:",
+                        "\\(P(\\textrm{Positive condition} \\mid \\textrm{Test result}) =
+                        \\frac{P(\\textrm{Test result} \\mid \\textrm{Positive condition}) 
+                        P(\\textrm{Positive condition})}{P(\\textrm{Test result})}", "\\)"))
   })
 
-  # Create datatable for output
+  # logcally correct way of formulating results comparatively
+  output$lr_info_text <- renderUI({
+    req(test_data())
+    withMathJax(paste0("Likelihood ratios can also be used to state comparative likelihoods. 
+                        They can be used to describe the likelihood of evidence
+                        (here test result) under two mutually exclusive hypothesis (condition positive vs negative). 
+                        Generally speaking it expresses:",
+                        "\\(\\textrm{Likelihood ratio} =
+                        \\frac{P(\\textrm{Evidence} \\mid \\textrm{Hypothesis 1})}
+                        {P(\\textrm{Evidence} \\mid \\textrm{Hypothesis 2})}", "\\)"))
+  })
+
+  # logically correct LR formulation: 
+  output$lr_text_out <- renderPrint({
+    lr_text <- create_lr_text(test_data())
+    cat(paste0(lr_text), sep = "")
+  }) %>%
+      bindEvent(input$calc, ignoreInit = TRUE)
+
+  # Create datatable for output of the PPV/posttest probability
   output$test <- renderDataTable({
     datatable(
       test_data() %>%
@@ -1214,7 +1252,7 @@ server <- function(input, output, session) {
     )
   })
 
-  # Create download of dataframe
+  # Create download of dataframe for output of PPV/posttest probability calculation
   output$download_data <- downloadHandler(
     filename = function() {
       paste0("posttest_probability_data.", input$filetype)
