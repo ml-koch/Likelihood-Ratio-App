@@ -1238,7 +1238,12 @@ server <- function(input, output, session) {
 
   # logically correct LR formulation: 
   output$lr_text_out <- renderPrint({
-    lr_text <- create_lr_text(test_data())
+    if (!input$create_tree) {
+      lr_text <- create_lr_text(test_data(), mode = "normal")
+    }
+    else if (input$create_tree) {
+      lr_text <- create_lr_text(data.frame(tree_data()[2]), mode = "tree")
+    }
     cat(paste0(lr_text), sep = "")
   }) %>%
       bindEvent(input$calc, ignoreInit = TRUE)

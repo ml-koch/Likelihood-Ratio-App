@@ -1,3 +1,4 @@
+library(tidyverse)
 multiple_post_prob_fast <- function(sens, spec, br, test_res) {
 
   # set a variable for the amount of tests
@@ -306,17 +307,29 @@ create_detail_text <- function(data) {
 }
 
 # create dynamic text UI for lr text formulation
-create_lr_text <- function(data) {
-  n <- nrow(data)
+create_lr_text <- function(data, mode) {
   out <- c()
 
-  for (i in 1:n) {
-    string_pos <- paste("The likelihood of a positive condition after a positive result on", data[i, 1],
+  if (mode == "normal") {
+    n <- nrow(data)
+    for (i in 1:n) {
+    string <- paste("The likelihood of a positive condition after a", data[i, 4], "result on", data[i, 1],
                     "is", round(data[i, 5], 2), "times as much as the same result under a negative condition.")
-    string_neg <- paste("The likelihood of a positive condition after a negative result on", data[i, 1],
-                    "is", round(data[i, 5], 2), "times as much as the same result under a negative condition.")
-    out <- append(out, paste0(string_pos, sep = "\n"))
-    out <- append(out, paste0(string_neg, sep = "\n"))
+    out <- append(out, paste0(string, sep = "\n"))
+    }
   }
+  else if (mode == "tree") {
+    x <- data %>% distinct(Test_name, LR, Test_result)
+    x$Test_name <- str_replace(string = x$Test_name, pattern = "T", replacement = "Test ")
+    x$Test_result[x$Test_result == "P"] <- "positive"
+    x$Test_result[x$Test_result == "N"] <- "negative"
+    n <- nrow(x)
+    for (i in 2:n) {
+      string <- paste("The likelihood of a positive condition after a", x[i, 3], "result on", x[i, 1],
+                      "is", round(x[i, 2], 2), "times as much as the same result under a negative condition.")
+      out <- append(out, paste0(string, sep = "\n"))
+    }
+  }
+  
   return(out)
 }
