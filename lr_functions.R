@@ -57,9 +57,9 @@ multiple_post_prob_fast <- function(sens, spec, br, test_res) {
   # make post odd into a probability
   post_prob <- post_odd / (1 + post_odd)
   
-  df$posttest_v[n] <- post_prob 
+  df$posttest_v[n] <- post_prob
 
-# Return the complete dataframe with correct names 
+# Return the complete dataframe with correct names
   colnames(df) <- c("Test Id", "Sensitivity", "Specificity",
                     "Result", "LR", "Pretest Probability",
                     "Posttest Probability")
